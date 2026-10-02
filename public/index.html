@@ -33,7 +33,7 @@
 <main id="top">
 <div class="wrap hero">
   <div>
-    <canvas class="bird" id="bird" width="176" height="120" aria-hidden="true"></canvas>
+    <canvas class="bird" id="bird" width="264" height="228" aria-hidden="true"></canvas>
     <h1>Find dead code in Swift. See why it is dead.</h1>
     <p class="lead">Lethen reads the compiler's index store, so it sees what the compiler sees. Every finding is <code>certain</code> or <code>likely</code>, with the reference chain to prove it.</p>
     <div class="cmd"><span class="p">$</span><code>brew install albovsky/tap/lethen</code><button type="button" data-copy="brew install albovsky/tap/lethen">Copy</button></div>
@@ -466,11 +466,13 @@ document.querySelectorAll("[data-copy]").forEach(function (b) {
 
 // Pixel swift above the headline. The bird is drawn as curves on a 44 x 30
 // grid and quantised to pixels, so the wing stroke is a continuous animation
-// rather than hand-drawn frames. Reduced motion shows one still frame.
+// rather than hand-drawn frames. On load the pixels fly in from the left and
+// assemble; afterwards the bird beats its wings and now and then sheds a few
+// pixels, which fall away dimmed. Reduced motion shows one still frame.
 (function () {
   var c = document.getElementById("bird");
   if (!c || !c.getContext) return;
-  var W = 44, H = 30, S = 4;
+  var W = 44, H = 30, S = 6, PAD = 8; // PAD rows below the bird for falling pixels
   var off = document.createElement("canvas"); off.width = W; off.height = H;
   var o = off.getContext("2d");
   var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -488,45 +490,88 @@ document.querySelectorAll("[data-copy]").forEach(function (b) {
       o.quadraticCurveTo(22 + s * 10 * k, 14 - 2 * (1 - k), 22 + s * 1.5, 14);
       o.closePath(); o.fill();
     });
+    var d = o.getImageData(0, 0, W, H).data, pts = [];
+    for (var y = 0; y < H; y++) for (var x = 0; x < W; x++) if (d[(y * W + x) * 4 + 3] > 110) pts.push([x, y]);
+    return pts;
   }
-  function draw(k, bob) {
+  var ctx, accent, muted;
+  function prepare() {
     var dpr = window.devicePixelRatio || 1;
-    var bw = Math.round(W * S * dpr), bh = Math.round(H * S * dpr);
+    var bw = Math.round(W * S * dpr), bh = Math.round((H + PAD) * S * dpr);
     if (c.width !== bw || c.height !== bh) { c.width = bw; c.height = bh; }
-    var ctx = c.getContext("2d"); ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    ctx.clearRect(0, 0, W * S, H * S);
-    shape(k);
-    var d = o.getImageData(0, 0, W, H).data;
-    ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue("--accent").trim() || "#f05138";
-    for (var y = 0; y < H; y++) for (var x = 0; x < W; x++) {
-      if (d[(y * W + x) * 4 + 3] > 110) ctx.fillRect(x * S, (y + bob) * S, S, S);
-    }
+    ctx = c.getContext("2d"); ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, W * S, (H + PAD) * S);
+    var cs = getComputedStyle(document.documentElement);
+    accent = cs.getPropertyValue("--accent").trim() || "#f05138";
+    muted = cs.getPropertyValue("--muted").trim() || "#8f8f8f";
   }
-  if (reduce) { draw(1, 0); return; }
-  var start = null;
+  function px(x, y, color, alpha) {
+    ctx.globalAlpha = alpha === undefined ? 1 : alpha; ctx.fillStyle = color;
+    ctx.fillRect(Math.round(x * S), Math.round(y * S), S, S);
+  }
+  if (reduce) { prepare(); shape(1).forEach(function (p) { px(p[0], p[1], accent); }); return; }
+
+  // Assembly: every pixel of the spread bird starts off the left edge, scattered
+  // vertically, and eases to its place; pixels further right start later.
+  var ASSEMBLE = 1.8, seeds = shape(1).map(function (p) {
+    return { x: p[0], y: p[1], x0: -4 - Math.random() * 30, y0: p[1] + (Math.random() - 0.5) * 18, d: (p[0] / W) * 0.7 + Math.random() * 0.3 };
+  });
+  var falling = [], lastShed = 0, start = null;
+  function ease(t) { return 1 - Math.pow(1 - t, 3); }
   function frame(now) {
     if (start === null) start = now;
     var t = (now - start) / 1000;
-    var k = 0.775 + 0.225 * Math.cos(t * 2 * Math.PI / 1.4); // one wingbeat per 1.4 s
-    var bob = Math.round(Math.sin(t * 2 * Math.PI / 2.8)); // a pixel of lift per two beats
-    draw(k, bob);
+    prepare();
+    if (t < ASSEMBLE) {
+      seeds.forEach(function (s) {
+        var u = Math.max(0, Math.min(1, (t - s.d) / (ASSEMBLE - 0.9)));
+        var e = ease(u);
+        px(s.x0 + (s.x - s.x0) * e, s.y0 + (s.y - s.y0) * e, accent, 0.35 + 0.65 * e);
+      });
+    } else {
+      var f = t - ASSEMBLE;
+      var k = 0.775 + 0.225 * Math.cos(f * 2 * Math.PI / 1.4); // one wingbeat per 1.4 s
+      var bob = Math.round(Math.sin(f * 2 * Math.PI / 2.8)); // a pixel of lift per two beats
+      var pts = shape(k);
+      pts.forEach(function (p) { px(p[0], p[1] + bob, accent); });
+      // Shed a few pixels from the lower edge every couple of seconds.
+      if (f - lastShed > 2.4) {
+        lastShed = f;
+        var low = pts.filter(function (p) { return p[1] >= 18; });
+        for (var i = 0; i < 4 && low.length; i++) {
+          var p = low[Math.floor(Math.random() * low.length)];
+          falling.push({ x: p[0], y: p[1] + bob, vy: 1 + Math.random() * 2, a: 1 });
+        }
+      }
+      falling = falling.filter(function (q) { return q.a > 0.02 && q.y < H + PAD; });
+      falling.forEach(function (q) {
+        q.y += q.vy / 60; q.vy += 0.12; q.a -= 0.007;
+        px(q.x, q.y, muted, q.a * 0.8);
+      });
+    }
+    ctx.globalAlpha = 1;
     requestAnimationFrame(frame);
   }
   requestAnimationFrame(frame);
 })();
 
-// Mark the nav link of the section in view.
+// Mark the nav link of the section that sits under the top third of the viewport.
 (function () {
   var links = Array.prototype.slice.call(document.querySelectorAll("nav a[href^='#']"));
   var secs = links.map(function (a) { return document.querySelector(a.getAttribute("href")); }).filter(Boolean);
-  if (!("IntersectionObserver" in window) || !secs.length) return;
-  var io = new IntersectionObserver(function (entries) {
-    entries.forEach(function (e) {
-      if (!e.isIntersecting) return;
-      links.forEach(function (a) { a.classList.toggle("on", a.getAttribute("href") === "#" + e.target.id); });
-    });
-  }, { rootMargin: "-40% 0px -55% 0px" });
-  secs.forEach(function (s) { io.observe(s); });
+  if (!secs.length) return;
+  var raf = 0;
+  function update() {
+    raf = 0;
+    var line = window.innerHeight * 0.35, cur = null;
+    secs.forEach(function (s) { if (s.getBoundingClientRect().top <= line) cur = s; });
+    if (window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 2) cur = secs[secs.length - 1];
+    links.forEach(function (a) { a.classList.toggle("on", !!cur && a.getAttribute("href") === "#" + cur.id); });
+  }
+  function schedule() { if (!raf) raf = requestAnimationFrame(update); }
+  window.addEventListener("scroll", schedule, { passive: true });
+  window.addEventListener("resize", schedule);
+  update();
 })();
 </script>
 </body>

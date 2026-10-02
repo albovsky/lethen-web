@@ -47,7 +47,7 @@ nav a:hover, nav a.on { color: var(--strong); }
 @media (max-width: 640px) { nav a.hide-sm { display: none; } }
 
 .hero { padding: 64px 20px 72px; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); gap: 48px; align-items: center; }
-.bird { display: block; width: 176px; height: 120px; margin: 0 0 10px -8px; }
+.bird { display: block; width: 264px; height: 228px; margin: -24px 0 -30px -12px; }
 .hero h1 { font: 700 clamp(2.2rem, 4.6vw, 3.4rem)/1.08 var(--sans); letter-spacing: -.03em; color: var(--strong); }
 .hero .lead { color: var(--muted); margin-top: 18px; max-width: 46ch; font-size: 1.08rem; }
 .cmd {
