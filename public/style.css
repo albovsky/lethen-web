@@ -103,8 +103,10 @@ p.sub { color: var(--muted); margin-top: 12px; max-width: 60ch; font-size: 1.02r
 .card pre { margin-top: 0; }
 .grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin-top: 32px; }
 .grid .span2 { grid-column: span 2; }
+.grid.install { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+pre:not(.term pre) { white-space: pre-wrap; overflow-wrap: anywhere; }
 @media (max-width: 1000px) { .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-@media (max-width: 560px) { .grid { grid-template-columns: 1fr; } .grid .span2 { grid-column: auto; } }
+@media (max-width: 560px) { .grid, .grid.install { grid-template-columns: 1fr; } .grid .span2 { grid-column: auto; } }
 
 /* Small visuals inside cards */
 .chips { display: flex; flex-wrap: wrap; gap: 8px; }
