@@ -192,7 +192,7 @@ Bridge.swift:8: <span class="w">warning</span>: Unused property 'tag'
       <p class="note">The graph is what a scan walks. Whatever it never reaches is reported.</p>
       <a class="btn" href="https://github.com/albovsky/lethen"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-3.2 19.5c.5.1.7-.2.7-.5v-1.8c-2.8.6-3.4-1.2-3.4-1.2-.4-1.2-1.1-1.5-1.1-1.5-.9-.6.1-.6.1-.6 1 .1 1.5 1 1.5 1 .9 1.6 2.4 1.1 3 .9.1-.7.4-1.1.6-1.4-2.2-.2-4.6-1.1-4.6-5 0-1.1.4-2 1-2.7-.1-.3-.4-1.3.1-2.7 0 0 .8-.3 2.8 1a9.5 9.5 0 0 1 5 0c1.9-1.3 2.7-1 2.7-1 .5 1.4.2 2.4.1 2.7.6.7 1 1.6 1 2.7 0 3.9-2.4 4.8-4.6 5 .4.3.7.9.7 1.9v2.8c0 .3.2.6.7.5A10 10 0 0 0 12 2z"/></svg>View on GitHub</a>
     </div>
-    <div class="dots" role="img" aria-label="A reference graph: declarations reached from the app entry point lit in orange, declarations nothing reaches dimmed below"><canvas id="dots" title="Click to replay"></canvas></div>
+    <div class="graph"><div class="dots" role="img" aria-label="A reference graph: declarations reached from the app entry point lit in orange, declarations nothing reaches dimmed below"><canvas id="dots"></canvas></div><button type="button" class="replay" id="dots-replay" hidden>Replay the graph</button></div>
   </div>
 </div>
 
@@ -467,6 +467,8 @@ document.querySelectorAll("[data-copy]").forEach(function (b) {
     }, { threshold: 0.5 });
     io.observe(c);
     c.addEventListener("click", play);
+    var btn = document.getElementById("dots-replay");
+    if (btn) { btn.hidden = false; btn.addEventListener("click", play); }
   } else { settle(); }
   var t; window.addEventListener("resize", function () { clearTimeout(t); t = setTimeout(function () { if (!raf) settle(); }, 100); });
   if (window.matchMedia) window.matchMedia("(prefers-color-scheme: light)").addEventListener("change", function () { if (!raf) settle(); });
