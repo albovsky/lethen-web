@@ -17,7 +17,7 @@
 <body>
 <header class="top" id="hdr">
   <div class="wrap">
-    <a class="brand" href="#top"><i></i>Lethen</a>
+    <a class="brand" href="#top">lethen<i>_</i></a>
     <nav aria-label="Main">
       <a class="hide-sm" href="#how">How it works</a>
       <a class="hide-sm" href="#features">Features</a>
@@ -182,11 +182,11 @@ Sources/Bridge.swift:8:16: <span class="w">warning</span>: Unused property 'tag'
   <div class="wrap">
     <div>
       <p class="eyebrow">Open source</p>
-      <h2>MIT licensed, built in the open</h2>
-      <p>Lethen is a fork of Periphery that keeps its license and its history. The analysis, the precision corpus, the adjudication of every finding and the release pipeline are all in the repository. No account, no telemetry, no paid tier.</p>
+      <h2>Open source, down to every finding</h2>
+      <p>MIT licensed, as a fork of Periphery that keeps its license and history. The analysis, the precision corpus, the verdict on every sampled finding and the release pipeline are all in the repository. No account, no telemetry, no paid tier.</p>
       <a class="btn" href="https://github.com/albovsky/lethen"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-3.2 19.5c.5.1.7-.2.7-.5v-1.8c-2.8.6-3.4-1.2-3.4-1.2-.4-1.2-1.1-1.5-1.1-1.5-.9-.6.1-.6.1-.6 1 .1 1.5 1 1.5 1 .9 1.6 2.4 1.1 3 .9.1-.7.4-1.1.6-1.4-2.2-.2-4.6-1.1-4.6-5 0-1.1.4-2 1-2.7-.1-.3-.4-1.3.1-2.7 0 0 .8-.3 2.8 1a9.5 9.5 0 0 1 5 0c1.9-1.3 2.7-1 2.7-1 .5 1.4.2 2.4.1 2.7.6.7 1 1.6 1 2.7 0 3.9-2.4 4.8-4.6 5 .4.3.7.9.7 1.9v2.8c0 .3.2.6.7.5A10 10 0 0 0 12 2z"/></svg>View on GitHub</a>
     </div>
-    <div class="dots" aria-hidden="true"><canvas id="dots"></canvas></div>
+    <div class="dots" role="img" aria-label="A reference graph: declarations reached from the app entry point in green, declarations nothing reaches dimmed"><canvas id="dots"></canvas><p class="cap">What a scan walks: from the entry point through every reference the compiler recorded. Nothing reaches the dimmed ones.</p></div>
   </div>
 </div>
 
@@ -317,18 +317,26 @@ document.querySelectorAll("[data-copy]").forEach(function (b) {
   } else { start(); }
 })();
 
-// Dot matrix spelling MIT, the license, drawn on a canvas in the open-source band.
+// Reference graph in the open-source band: what a scan walks. Roots on the
+// left, declarations they reach in green, declarations nothing reaches dimmed.
 (function () {
   var c = document.getElementById("dots");
   if (!c || !c.getContext) return;
-  var font = {
-    M: ["10001","11011","10101","10101","10001","10001","10001"],
-    I: ["11111","00100","00100","00100","00100","00100","11111"],
-    T: ["11111","00100","00100","00100","00100","00100","00100"]
-  };
-  var word = "MIT";
-  var seed = 7;
-  function rnd() { seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646; }
+  var nodes = [
+    { id: "app", l: "@main App", x: 0.06, y: 0.5, root: true },
+    { id: "scene", l: "SceneDelegate", x: 0.24, y: 0.22 },
+    { id: "feed", l: "FeedViewModel", x: 0.26, y: 0.56 },
+    { id: "store", l: "Store", x: 0.46, y: 0.4 },
+    { id: "load", l: "Store.load()", x: 0.66, y: 0.26 },
+    { id: "cache", l: "Cache", x: 0.68, y: 0.56 },
+    { id: "parse", l: "Parser.parse()", x: 0.86, y: 0.4 },
+    { id: "reload", l: "Store.reload()", x: 0.64, y: 0.92, dead: true },
+    { id: "legacy", l: "LegacyCache", x: 0.4, y: 0.76, dead: true },
+    { id: "migrate", l: "migrate()", x: 0.14, y: 0.9, dead: true },
+    { id: "tag", l: "Bridge.tag", x: 0.9, y: 0.72, dead: true, likely: true }
+  ];
+  var edges = [["app","scene"],["app","feed"],["scene","store"],["feed","store"],["store","load"],["store","cache"],["load","parse"],["cache","parse"],["reload","cache"],["legacy","migrate"],["reload","legacy"]];
+  var byId = {}; nodes.forEach(function (n) { byId[n.id] = n; });
   function draw() {
     var dpr = window.devicePixelRatio || 1;
     var w = c.clientWidth, h = c.clientHeight;
@@ -336,30 +344,40 @@ document.querySelectorAll("[data-copy]").forEach(function (b) {
     c.width = w * dpr; c.height = h * dpr;
     var ctx = c.getContext("2d"); ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     var cs = getComputedStyle(document.documentElement);
-    var accent = cs.getPropertyValue("--accent").trim() || "#3ecf8e";
-    var dim = cs.getPropertyValue("--line").trim() || "#2a2a2a";
-    var step = Math.max(10, Math.floor(w / 46));
-    var size = step * 0.62, r = size * 0.28;
-    var cols = Math.floor(w / step), rows = Math.floor(h / step);
-    var ox = Math.floor((w - cols * step) / 2), oy = Math.floor((h - rows * step) / 2);
-    var glyphW = 5, gap = 2, textCols = word.length * glyphW + (word.length - 1) * gap;
-    var tx = Math.floor((cols - textCols) / 2), ty = Math.floor((rows - 7) / 2);
-    var lit = {};
-    for (var i = 0; i < word.length; i++) {
-      var g = font[word[i]];
-      for (var y = 0; y < 7; y++) for (var x = 0; x < 5; x++) if (g[y][x] === "1") lit[(tx + i * (glyphW + gap) + x) + "," + (ty + y)] = 1;
-    }
-    seed = 7;
+    var accent = cs.getPropertyValue("--accent").trim() || "#f05138";
+    var muted = cs.getPropertyValue("--muted").trim() || "#8f8f8f";
+    var line = cs.getPropertyValue("--line-strong").trim() || "#3d3d3d";
+    var strong = cs.getPropertyValue("--strong").trim() || "#fafafa";
+    var warn = cs.getPropertyValue("--warn").trim() || "#e8c547";
+    var small = w < 480;
+    var px = function (n) { return 24 + n.x * (w - 48); }, py = function (n) { return 20 + n.y * (h - 40); };
     ctx.clearRect(0, 0, w, h);
-    for (var y2 = 0; y2 < rows; y2++) for (var x2 = 0; x2 < cols; x2++) {
-      var on = lit[x2 + "," + y2];
-      var v = rnd();
-      ctx.globalAlpha = on ? 0.75 + v * 0.25 : (v < 0.08 ? 0.35 : 0.1 + v * 0.18);
-      ctx.fillStyle = on ? accent : (v < 0.08 ? accent : dim);
-      var px = ox + x2 * step + (step - size) / 2, py = oy + y2 * step + (step - size) / 2;
-      ctx.beginPath(); ctx.roundRect(px, py, size, size, r); ctx.fill();
-    }
-    ctx.globalAlpha = 1;
+    ctx.lineWidth = 1.5;
+    edges.forEach(function (e) {
+      var a = byId[e[0]], b = byId[e[1]];
+      var dead = a.dead || b.dead;
+      ctx.strokeStyle = dead ? line : accent;
+      ctx.globalAlpha = dead ? 0.9 : 0.55;
+      ctx.setLineDash(dead ? [3, 4] : []);
+      ctx.beginPath();
+      var x1 = px(a), y1 = py(a), x2 = px(b), y2 = py(b), mx = (x1 + x2) / 2;
+      ctx.moveTo(x1, y1); ctx.bezierCurveTo(mx, y1, mx, y2, x2, y2); ctx.stroke();
+    });
+    ctx.setLineDash([]); ctx.globalAlpha = 1;
+    ctx.font = (small ? "9px " : "11px ") + (cs.getPropertyValue("--mono") || "monospace");
+    ctx.textBaseline = "middle";
+    nodes.forEach(function (n) {
+      var x = px(n), y = py(n), r = n.root ? 6 : 4.5;
+      ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2);
+      if (n.dead) { ctx.fillStyle = "rgba(0,0,0,0)"; ctx.strokeStyle = n.likely ? warn : muted; ctx.lineWidth = 1.5; ctx.stroke(); }
+      else { ctx.fillStyle = accent; ctx.fill(); }
+      if (n.root) { ctx.beginPath(); ctx.arc(x, y, r + 4, 0, Math.PI * 2); ctx.strokeStyle = accent; ctx.globalAlpha = .4; ctx.stroke(); ctx.globalAlpha = 1; }
+      ctx.fillStyle = n.dead ? muted : strong;
+      var right = n.x < 0.8;
+      ctx.textAlign = right ? "left" : "right";
+      var label = (small ? n.l.replace(/^[A-Za-z]+\./, "") : n.l) + (n.dead ? (n.likely ? "  likely" : "  unused") : "");
+      ctx.fillText(label, right ? x + r + 6 : x - r - 6, y - (n.root ? 0 : 0));
+    });
   }
   draw();
   var t; window.addEventListener("resize", function () { clearTimeout(t); t = setTimeout(draw, 100); });
