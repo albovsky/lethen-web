@@ -286,12 +286,12 @@ document.querySelectorAll("[data-copy]").forEach(function (b) {
 
   function play() {
     stop();
-    replay.hidden = true;
+    replay.hidden = false;
     screen.innerHTML = "";
     var i = 0;
     function next(delay) { timer = setTimeout(step, delay); }
     function step() {
-      if (i >= lines.length) { replay.hidden = false; timer = null; return; }
+      if (i >= lines.length) { timer = null; return; }
       var line = lines[i++];
       var isCmd = /^<span class="d">\$ /.test(line);
       if (isCmd) {

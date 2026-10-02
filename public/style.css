@@ -11,7 +11,7 @@
   :root {
     --bg: #fafafa; --fg: #262626; --strong: #0a0a0a; --muted: #6b6b6b; --line: #e3e3e3; --line-strong: #cfcfcf;
     --card: #ffffff; --card-2: #f3f3f3; --term: #0f0f0f;
-    --accent: #d9391f; --accent-dim: #fbe3de; --warn: #8a6a00; --comment: #8f8f8f;
+    --accent: #c9321a; --accent-dim: #fbe3de; --warn: #8a6a00; --comment: #8f8f8f;
     color-scheme: light;
   }
   /* The terminal stays dark in both themes. */
