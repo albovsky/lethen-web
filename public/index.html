@@ -31,9 +31,10 @@
 </header>
 
 <main id="top">
+<div class="herobg">
+<canvas class="bg" id="bg" aria-hidden="true"></canvas>
 <div class="wrap hero">
   <div>
-    <canvas class="bird" id="bird" width="264" height="228" aria-hidden="true"></canvas>
     <h1>Find dead code in Swift. See why it is dead.</h1>
     <p class="lead">Lethen reads the compiler's index store, so it sees what the compiler sees. Every finding is <code>certain</code> or <code>likely</code>, with the reference chain to prove it.</p>
     <div class="cmd"><span class="p">$</span><code>brew install albovsky/tap/lethen</code><button type="button" data-copy="brew install albovsky/tap/lethen">Copy</button></div>
@@ -58,6 +59,7 @@ No declaration in the scanned modules references it.
 </pre>
     <button type="button" class="replay" id="replay" hidden>Replay</button>
   </div>
+</div>
 </div>
 
 <section id="how">
@@ -464,94 +466,56 @@ document.querySelectorAll("[data-copy]").forEach(function (b) {
   if (window.matchMedia) window.matchMedia("(prefers-color-scheme: light)").addEventListener("change", function () { if (!raf) settle(); });
 })();
 
-// Pixel swift above the headline. The bird is drawn as curves on a 44 x 30
-// grid and quantised to pixels, so the wing stroke is a continuous animation
-// rather than hand-drawn frames. On load the pixels fly in from the left and
-// assemble; afterwards the bird beats its wings and now and then sheds a few
-// pixels, which fall away dimmed. Reduced motion shows one still frame.
+// Hero background: a faint field of pixels. Every nine seconds a scan passes
+// across it; the pixels the scan finds unreachable flash orange, fall out of
+// the grid and the grid heals before the next pass. Reduced motion shows the
+// still field.
 (function () {
-  var c = document.getElementById("bird");
+  var c = document.getElementById("bg");
   if (!c || !c.getContext) return;
-  var W = 44, H = 30, S = 6, PAD = 8; // PAD rows below the bird for falling pixels
-  var off = document.createElement("canvas"); off.width = W; off.height = H;
-  var o = off.getContext("2d");
+  var CELL = 16, P = 3, PERIOD = 9, SWEEP = 5;
   var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  function shape(k) { // k: wing span, 1 spread, 0.55 mid-stroke
-    o.clearRect(0, 0, W, H);
-    o.fillStyle = "#fff"; o.strokeStyle = "#fff"; o.lineCap = "round"; o.lineWidth = 1.6;
-    o.beginPath(); o.ellipse(22, 14.5, 1.9, 6, 0, 0, Math.PI * 2); o.fill();
-    o.beginPath(); o.arc(22, 7.2, 2, 0, Math.PI * 2); o.fill();
-    o.beginPath(); o.moveTo(22, 20); o.lineTo(19.8, 26); o.stroke();
-    o.beginPath(); o.moveTo(22, 20); o.lineTo(24.2, 26); o.stroke();
-    [-1, 1].forEach(function (s) {
-      var tx = 22 + s * 20 * k, ty = 28 - 10 * (1 - k);
-      o.beginPath(); o.moveTo(22, 10);
-      o.quadraticCurveTo(22 + s * 15 * k, 7 + 2 * (1 - k), tx, ty);
-      o.quadraticCurveTo(22 + s * 10 * k, 14 - 2 * (1 - k), 22 + s * 1.5, 14);
-      o.closePath(); o.fill();
-    });
-    var d = o.getImageData(0, 0, W, H).data, pts = [];
-    for (var y = 0; y < H; y++) for (var x = 0; x < W; x++) if (d[(y * W + x) * 4 + 3] > 110) pts.push([x, y]);
-    return pts;
-  }
-  var ctx, accent, muted;
-  function prepare() {
-    var dpr = window.devicePixelRatio || 1;
-    var bw = Math.round(W * S * dpr), bh = Math.round((H + PAD) * S * dpr);
+  function rnd(seed) { var x = Math.sin(seed * 9999.1) * 10000; return x - Math.floor(x); }
+  function draw(t) {
+    var dpr = window.devicePixelRatio || 1, w = c.clientWidth, h = c.clientHeight;
+    if (!w || !h) return;
+    var bw = Math.round(w * dpr), bh = Math.round(h * dpr);
     if (c.width !== bw || c.height !== bh) { c.width = bw; c.height = bh; }
-    ctx = c.getContext("2d"); ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    ctx.clearRect(0, 0, W * S, (H + PAD) * S);
+    var ctx = c.getContext("2d"); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, w, h);
     var cs = getComputedStyle(document.documentElement);
-    accent = cs.getPropertyValue("--accent").trim() || "#f05138";
-    muted = cs.getPropertyValue("--muted").trim() || "#8f8f8f";
+    var accent = cs.getPropertyValue("--accent").trim() || "#f05138";
+    var fg = cs.getPropertyValue("--fg").trim() || "#e4e4e4";
+    var u = t % PERIOD, cyc = Math.floor(t / PERIOD), scanX = (u / SWEEP) * w;
+    var cols = Math.ceil(w / CELL), rows = Math.ceil(h / CELL);
+    for (var y = 0; y < rows; y++) for (var x = 0; x < cols; x++) {
+      var px = x * CELL + 6, py = y * CELL + 6, a = 0.10 + 0.06 * rnd(x * 3 + y * 17);
+      var dead = !reduce && rnd(x * 131 + y * 7 + cyc * 3) < 0.035;
+      if (dead && px < scanX) {
+        var since = (scanX - px) / w * SWEEP; // seconds since the scan passed this pixel
+        if (since < 0.6) { ctx.globalAlpha = 0.9; ctx.fillStyle = accent; ctx.fillRect(px - 1, py - 1, P + 2, P + 2); continue; }
+        var fall = since - 0.6;
+        if (fall < 1.6) { ctx.globalAlpha = 0.9 * (1 - fall / 1.6); ctx.fillStyle = accent; ctx.fillRect(px, py + fall * fall * 60, P, P); }
+        else if (u > SWEEP + 1.5) { ctx.globalAlpha = a * Math.min(1, (u - SWEEP - 1.5) / 1.5); ctx.fillStyle = fg; ctx.fillRect(px, py, P, P); }
+        continue;
+      }
+      ctx.globalAlpha = a; ctx.fillStyle = fg; ctx.fillRect(px, py, P, P);
+    }
+    if (!reduce && u < SWEEP) { ctx.globalAlpha = 0.5; ctx.fillStyle = accent; ctx.fillRect(scanX, 0, 1, h); }
+    ctx.globalAlpha = 1;
   }
-  function px(x, y, color, alpha) {
-    ctx.globalAlpha = alpha === undefined ? 1 : alpha; ctx.fillStyle = color;
-    ctx.fillRect(Math.round(x * S), Math.round(y * S), S, S);
+  if (reduce) {
+    draw(0);
+    window.addEventListener("resize", function () { draw(0); });
+    if (window.matchMedia) window.matchMedia("(prefers-color-scheme: light)").addEventListener("change", function () { draw(0); });
+    return;
   }
-  if (reduce) { prepare(); shape(1).forEach(function (p) { px(p[0], p[1], accent); }); return; }
-
-  // Assembly: every pixel of the spread bird starts off the left edge, scattered
-  // vertically, and eases to its place; pixels further right start later.
-  var ASSEMBLE = 1.8, seeds = shape(1).map(function (p) {
-    return { x: p[0], y: p[1], x0: -4 - Math.random() * 30, y0: p[1] + (Math.random() - 0.5) * 18, d: (p[0] / W) * 0.7 + Math.random() * 0.3 };
-  });
-  var falling = [], lastShed = 0, start = null;
-  function ease(t) { return 1 - Math.pow(1 - t, 3); }
+  var start = null, visible = true;
   function frame(now) {
     if (start === null) start = now;
-    var t = (now - start) / 1000;
-    prepare();
-    if (t < ASSEMBLE) {
-      seeds.forEach(function (s) {
-        var u = Math.max(0, Math.min(1, (t - s.d) / (ASSEMBLE - 0.9)));
-        var e = ease(u);
-        px(s.x0 + (s.x - s.x0) * e, s.y0 + (s.y - s.y0) * e, accent, 0.35 + 0.65 * e);
-      });
-    } else {
-      var f = t - ASSEMBLE;
-      var k = 0.775 + 0.225 * Math.cos(f * 2 * Math.PI / 1.4); // one wingbeat per 1.4 s
-      var bob = Math.round(Math.sin(f * 2 * Math.PI / 2.8)); // a pixel of lift per two beats
-      var pts = shape(k);
-      pts.forEach(function (p) { px(p[0], p[1] + bob, accent); });
-      // Shed a few pixels from the lower edge every couple of seconds.
-      if (f - lastShed > 2.4) {
-        lastShed = f;
-        var low = pts.filter(function (p) { return p[1] >= 18; });
-        for (var i = 0; i < 4 && low.length; i++) {
-          var p = low[Math.floor(Math.random() * low.length)];
-          falling.push({ x: p[0], y: p[1] + bob, vy: 1 + Math.random() * 2, a: 1 });
-        }
-      }
-      falling = falling.filter(function (q) { return q.a > 0.02 && q.y < H + PAD; });
-      falling.forEach(function (q) {
-        q.y += q.vy / 60; q.vy += 0.12; q.a -= 0.007;
-        px(q.x, q.y, muted, q.a * 0.8);
-      });
-    }
-    ctx.globalAlpha = 1;
+    if (visible) draw((now - start) / 1000);
     requestAnimationFrame(frame);
   }
+  if ("IntersectionObserver" in window) new IntersectionObserver(function (e) { visible = e[0].isIntersecting; }).observe(c);
   requestAnimationFrame(frame);
 })();
 

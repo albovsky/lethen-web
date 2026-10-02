@@ -47,7 +47,11 @@ nav a:hover, nav a.on { color: var(--strong); }
 @media (max-width: 640px) { nav a.hide-sm { display: none; } }
 
 .hero { padding: 64px 20px 72px; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); gap: 48px; align-items: center; }
-.bird { display: block; width: 264px; height: 228px; margin: -24px 0 -30px -12px; }
+.herobg { position: relative; overflow: hidden; }
+.herobg .bg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.herobg::before { content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(90deg, var(--bg) 0%, color-mix(in srgb, var(--bg) 78%, transparent) 40%, transparent 62%); }
+.herobg .hero { position: relative; z-index: 1; }
 .hero h1 { font: 700 clamp(2.2rem, 4.6vw, 3.4rem)/1.08 var(--sans); letter-spacing: -.03em; color: var(--strong); }
 .hero .lead { color: var(--muted); margin-top: 18px; max-width: 46ch; font-size: 1.08rem; }
 .cmd {
