@@ -34,10 +34,10 @@
 <div class="wrap hero">
   <div>
     <h1>Find dead code in Swift. Prove it.</h1>
-    <p class="lead">Lethen reads the compiler's index store, so it sees what the compiler sees. Every finding is <code>certain</code> or <code>likely</code>, and <code>lethen explain</code> shows the reference chain behind it. Open source, MIT licensed.</p>
+    <p class="lead">Lethen reads the compiler's index store, so it sees what the compiler sees. Every finding is <code>certain</code> or <code>likely</code>, with the reference chain to prove it.</p>
     <div class="cmd"><span class="p">$</span><code>brew install albovsky/tap/lethen</code><button type="button" data-copy="brew install albovsky/tap/lethen">Copy</button></div>
     <p class="links"><a href="#install">Other ways to install</a><a href="https://github.com/albovsky/lethen/blob/master/docs/guide.md">Read the guide</a></p>
-    <p class="note">Apple silicon Macs (the package minimum is macOS 15, but runs on macOS 15 are not yet verified; macOS 26 and 27 are) and Linux (x86_64, aarch64). Needs Swift 6.3 or later to build your project. MIT licensed. No account or paid plan needed. Confidence levels, <code>lethen explain</code>, <code>--min-confidence</code> and the GitHub Action are in release 3.10.0 and later.</p>
+    <p class="note">macOS (Apple silicon) and Linux. Swift 6.3 or later. MIT licensed.</p>
   </div>
   <div class="term" id="term">
     <div class="tb"><span>~/Projects/Store</span><span>lethen scan</span></div>
@@ -63,17 +63,17 @@ No declaration in the scanned modules references it.
   <div class="wrap">
     <p class="eyebrow">How it works</p>
     <h2>A result tells you why</h2>
-    <p class="sub">Each result is <code>certain</code> or <code>likely</code>. <code>likely</code> means something dynamic, such as Objective-C or a name in a string, could reach the declaration without a reference Lethen can see.</p>
+    <p class="sub"><code>likely</code> means something dynamic, such as Objective-C or a name in a string, could still reach the declaration.</p>
     <div class="two">
       <div class="card">
         <h3>Gate CI on what Lethen is sure about</h3>
 <pre><span class="d">$ </span>lethen scan --min-confidence certain --strict</pre>
-        <p>Record today's results once with <code>--write-baseline baseline.json</code>, then the next scan reports only new ones.</p>
+        <p>Add <code>--write-baseline</code> once, and later scans report only new results.</p>
       </div>
       <div class="card">
         <h3>Ask why something is used or unused</h3>
 <pre><span class="d">$ </span>lethen explain Store.load</pre>
-        <p>Output formats include <code>xcode</code>, <code>json</code>, <code>csv</code>, <code>github-actions</code>, <code>github-markdown</code>, <code>gitlab-codequality</code> and <code>codeclimate</code>.</p>
+        <p>Output as <code>xcode</code>, <code>json</code>, <code>csv</code>, <code>github-actions</code> or <code>gitlab-codequality</code>.</p>
       </div>
     </div>
   </div>
@@ -83,12 +83,12 @@ No declaration in the scanned modules references it.
   <div class="wrap">
     <p class="eyebrow">Features</p>
     <h2>Built for real projects</h2>
-    <p class="sub">Lethen scans SwiftPM packages, Xcode projects and Bazel workspaces, and keeps the configuration you already have.</p>
+    <p class="sub">SwiftPM, Xcode and Bazel, with the configuration you already have.</p>
     <div class="grid">
       <div class="card feature-wide">
         <div>
           <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m8.5 12 2.5 2.5 4.5-5"/></svg>Confidence and reasons</h3>
-          <p>Every result is <b>certain</b> or <b>likely</b>, with a one-sentence reason. <code>--min-confidence</code> filters on it, so CI can fail only on what Lethen is sure about.</p>
+          <p>Every result is <b>certain</b> or <b>likely</b>, with a reason. <code>--min-confidence</code> lets CI fail only on what Lethen is sure about.</p>
         </div>
         <div class="vis mini">Store.swift:12: <span class="w">warning</span>: Unused function 'reload()'
   <span class="a">certain</span>  no references in the scanned modules
@@ -97,37 +97,37 @@ Bridge.swift:8: <span class="w">warning</span>: Unused property 'tag'
       </div>
       <div class="card">
         <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.7.3-1 .9-1 1.7"/><path d="M12 17h.01"/></svg><code>lethen explain</code></h3>
-        <p>Answers "why is this used or unused" with the <b>shortest reference chain</b> or the rule that retained it.</p>
+        <p>The <b>shortest reference chain</b>, or the rule that retained it.</p>
         <div class="vis chain"><span>Store.load()</span><span class="arr">←</span><span>Feed.refresh()</span><span class="arr">←</span><span class="end">App</span></div>
       </div>
       <div class="card">
         <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h7l2 3h7v8H4z"/><path d="M4 7V5h5l2 2"/></svg>Objective-C aware</h3>
-        <p>Reads the index clang writes for Objective-C files, so a Swift declaration <b>called from a <code>.m</code> file counts as used</b>.</p>
+        <p>Swift <b>called from a <code>.m</code> file counts as used</b>.</p>
         <div class="vis chain"><span>Feed.m</span><span class="arr">→</span><span class="end">FeedViewModel.swift</span></div>
       </div>
       <div class="card">
         <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3 8 4.5v9L12 21l-8-4.5v-9z"/><path d="M12 12 4 7.5M12 12l8-4.5M12 12v9"/></svg>SwiftPM, Xcode, Bazel</h3>
-        <p>Managed SwiftPM scans, Xcode schemes and configurations, and Bazel mode. Or <b>reuse your own build</b> with <code>--skip-build</code>.</p>
+        <p>Managed scans, or <b>your own index store</b> with <code>--skip-build</code>.</p>
         <div class="vis chips"><span class="chip">Package.swift</span><span class="chip">.xcodeproj</span><span class="chip">WORKSPACE</span></div>
       </div>
       <div class="card">
         <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 5 6v5c0 4.5 3 8.3 7 9.5 4-1.2 7-5 7-9.5V6z"/><path d="m9 12 2 2 4-4"/></svg>Never reads a stale index</h3>
-        <p>A SwiftPM build is reused only when Lethen can <b>verify its index</b>; otherwise it cleans and rebuilds. <code>--clean-build</code> always cleans.</p>
+        <p>A build is reused only when its index <b>verifies</b>; otherwise it rebuilds.</p>
         <div class="vis steps"><span>build</span><span class="arr">→</span><span>verify</span><span class="arr">→</span><i><span class="hi">reuse</span><span class="arr">or</span><span>clean</span></i></div>
       </div>
       <div class="card">
         <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="2.5"/><circle cx="6" cy="18" r="2.5"/><circle cx="18" cy="9" r="2.5"/><path d="M6 8.5v7M18 11.5c0 3-3 4-6 4H8.5"/></svg>GitHub Action and plugin</h3>
-        <p>The action <b>annotates unused code on pull requests</b>. A SwiftPM command plugin runs the same scan from a package or Xcode.</p>
+        <p><b>Annotates unused code on pull requests.</b> A SwiftPM plugin runs the same scan.</p>
         <div class="vis mini"><span class="s">uses:</span> albovsky/lethen@v3
 <span class="a">✓</span> 2 new unused, 0 fixed</div>
       </div>
       <div class="card">
         <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h13l-3-3M20 16H7l3 3"/></svg>Periphery compatible</h3>
-        <p>Your <b>existing setup keeps working</b>: configuration, ignore comments and the library name.</p>
+        <p>Your configuration, ignore comments and library name <b>keep working</b>.</p>
         <div class="vis chips"><span class="chip">.periphery.yml</span><span class="chip">// periphery:ignore</span><span class="chip">PeripheryKit</span></div>
       </div>
     </div>
-    <p class="tail"><b>Same engine, more honest results.</b> Lethen shares Periphery's analysis and adds the parts that let you trust it.</p>
+    <p class="tail"><b>Periphery's engine, improved results.</b> Fewer false positives, a confidence level and a reason on every finding.</p>
   </div>
 </section>
 
@@ -135,12 +135,12 @@ Bridge.swift:8: <span class="w">warning</span>: Unused property 'tag'
   <div class="wrap">
     <p class="eyebrow">Accuracy</p>
     <h2>Measured in the open</h2>
-    <p class="sub">Every analysis change re-scans a corpus of pinned open-source projects, and each changed finding is checked by hand against the source before it is recorded.</p>
+    <p class="sub">Every analysis change re-scans pinned open-source projects, and each changed finding is checked by hand.</p>
     <div class="two">
       <div class="card">
         <div class="stat">84.0 %<small>precision</small></div>
-        <p>On 81 sampled findings across Alamofire, swift-nio and Wikipedia iOS. <b>The target is 95 %</b>, so this is not there yet. The first measurement, on 2026-09-27, was 73 %.</p>
-        <p class="note">Precision is true positives over true plus false positives in the sample. <a href="https://github.com/albovsky/lethen/blob/master/docs/validation/precision-corpus.md">Scorecard and method</a>.</p>
+        <p>81 sampled findings across Alamofire, swift-nio and Wikipedia iOS. <b>The target is 95 %.</b> The first measurement, on 2026-09-27, was 73 %.</p>
+        <p class="note"><a href="https://github.com/albovsky/lethen/blob/master/docs/validation/precision-corpus.md">Scorecard and method</a>.</p>
       </div>
       <div class="card">
         <h3>By project, against the target</h3>
@@ -160,23 +160,23 @@ Bridge.swift:8: <span class="w">warning</span>: Unused property 'tag'
   <div class="wrap">
     <p class="eyebrow">Compared with Periphery</p>
     <h2>Fewer findings, and the differences checked</h2>
-    <p class="sub">Lethen is a fork of <a href="https://github.com/peripheryapp/periphery">Periphery</a> and shares most of its analysis. On 2026-10-02 we scanned five projects with Lethen 3.10.0 and Periphery 3.8.0, the latest upstream release, and read the source behind every difference. Results with <code>--retain-public</code>, except Wikipedia iOS.</p>
+    <p class="sub">Lethen 3.10 against the latest <a href="https://github.com/peripheryapp/periphery">Periphery</a> release, 3.8.0, on five projects, with the source behind every difference read by hand.</p>
     <div class="table-scroll"><table class="wide">
       <thead><tr><th>Project</th><th class="num">Periphery</th><th class="num">Lethen</th><th>What the differences were</th></tr></thead>
       <tbody>
         <tr><td>swift-format</td><td class="num">29</td><td class="num">29</td><td>Identical.</td></tr>
-        <tr><td>Alamofire</td><td class="num">96</td><td class="num">71</td><td>All 30 findings only Periphery reports were false positives or unactionable public API parameters.</td></tr>
-        <tr><td>swift-argument-parser</td><td class="num">80</td><td class="num">78</td><td>Of the 10 findings only Periphery reports, 8 were unactionable public API, 1 was debatable and 1 was a true positive that Lethen reports at a different level. All 8 findings only Lethen reports were true positives.</td></tr>
-        <tr><td>swift-nio</td><td class="num">451</td><td class="num">315</td><td>Of 15 sampled Periphery-only findings, 12 were false positives, 3 unactionable API and none a true positive.</td></tr>
-        <tr><td>Wikipedia iOS</td><td class="num">3,212</td><td class="num">2,783</td><td>10 of 15 sampled Periphery-only groups were Swift code called from Objective-C.</td></tr>
+        <tr><td>Alamofire</td><td class="num">96</td><td class="num">71</td><td>All 30 Periphery-only findings were false positives or public API.</td></tr>
+        <tr><td>swift-argument-parser</td><td class="num">80</td><td class="num">78</td><td>Periphery-only: 8 public API, 1 debatable, 1 true positive. Lethen-only: 8 true positives.</td></tr>
+        <tr><td>swift-nio</td><td class="num">451</td><td class="num">315</td><td>15 sampled Periphery-only: 12 false positives, 3 public API, 0 true positives.</td></tr>
+        <tr><td>Wikipedia iOS</td><td class="num">3,212</td><td class="num">2,783</td><td>10 of 15 sampled Periphery-only groups were Swift called from Objective-C.</td></tr>
       </tbody>
     </table></div>
     <details class="note">
       <summary>How this was measured</summary>
-      <p>Lethen 3.10.0 is <code>master</code> at <code>d7dec6c</code>. Periphery 3.8.0 is upstream tag <code>3.8.0</code> (<code>a2db299</code>), the latest upstream release. Both were built from source with <code>swift build -c release</code>. Alamofire, swift-argument-parser, swift-format and swift-nio ran on Linux x86_64 with Swift 6.4 (swift-6.4-RELEASE), at commits <code>bda9ed5</code>, <code>1021ac8</code>, <code>b15dd59</code> and <code>feaf4ac</code>, with <code>--retain-public --format json --quiet --disable-update-check</code>. Wikipedia iOS ran at <code>599e4a6</code> on an arm64 Mac with Xcode 27.0 (27A266a), Swift 6.4 and macOS 27, with <code>--project Wikipedia.xcodeproj --schemes Wikipedia -- -destination "generic/platform=iOS Simulator"</code>.</p>
+      <p>Results with <code>--retain-public</code>, except Wikipedia iOS. Lethen 3.10.0 is <code>master</code> at <code>d7dec6c</code>. Periphery 3.8.0 is upstream tag <code>3.8.0</code> (<code>a2db299</code>), the latest upstream release. Both were built from source with <code>swift build -c release</code>. Alamofire, swift-argument-parser, swift-format and swift-nio ran on Linux x86_64 with Swift 6.4 (swift-6.4-RELEASE), at commits <code>bda9ed5</code>, <code>1021ac8</code>, <code>b15dd59</code> and <code>feaf4ac</code>, with <code>--retain-public --format json --quiet --disable-update-check</code>. Wikipedia iOS ran at <code>599e4a6</code> on an arm64 Mac with Xcode 27.0 (27A266a), Swift 6.4 and macOS 27, with <code>--project Wikipedia.xcodeproj --schemes Wikipedia -- -destination "generic/platform=iOS Simulator"</code>.</p>
       <p>Findings were matched on file, line, name and hint. For each project, every finding reported by only one tool was listed, and up to 15 per direction were checked by reading the source and, for Lethen, with <code>lethen explain</code>. The raw scan output is not published yet, so treat these numbers as a measurement we made, not a reproducible benchmark.</p>
     </details>
-    <p class="note">Lethen was not faster: cold scans were roughly equal, and its SwiftPM build reuse falls back to a full rebuild on some packages. Periphery 3.8.0 returned stale results after a source edit in our test, while Lethen rebuilt and got it right. Lethen reports fewer findings in total, mostly by policy, and has small recall losses of its own, such as unused imports in Objective-C files. Xcode scans are slow, and 22 % of Wikipedia iOS findings are only <code>likely</code>. Known issues are tracked on <a href="https://github.com/albovsky/lethen/issues">GitHub</a>.</p>
+    <p class="note">Not faster: cold scans were roughly equal. Lethen has recall losses of its own, such as unused imports in Objective-C files, and 22 % of Wikipedia iOS findings are only <code>likely</code>. Known issues are on <a href="https://github.com/albovsky/lethen/issues">GitHub</a>.</p>
   </div>
 </section>
 
@@ -185,8 +185,8 @@ Bridge.swift:8: <span class="w">warning</span>: Unused property 'tag'
     <div>
       <p class="eyebrow">Open source</p>
       <h2>Open source, down to every finding</h2>
-      <p>MIT licensed, as a fork of Periphery that keeps its license and history. The analysis, the precision corpus, the verdict on every sampled finding and the release pipeline are all in the repository. No account, no telemetry, no paid tier.</p>
-      <p class="note">The graph is what a scan walks: from the entry point through every reference the compiler recorded. Whatever the walk never reaches is reported.</p>
+      <p>MIT licensed. The analysis, the precision corpus and the release pipeline are all in the repository. No account, no telemetry, no paid tier.</p>
+      <p class="note">The graph is what a scan walks. Whatever it never reaches is reported.</p>
       <a class="btn" href="https://github.com/albovsky/lethen"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-3.2 19.5c.5.1.7-.2.7-.5v-1.8c-2.8.6-3.4-1.2-3.4-1.2-.4-1.2-1.1-1.5-1.1-1.5-.9-.6.1-.6.1-.6 1 .1 1.5 1 1.5 1 .9 1.6 2.4 1.1 3 .9.1-.7.4-1.1.6-1.4-2.2-.2-4.6-1.1-4.6-5 0-1.1.4-2 1-2.7-.1-.3-.4-1.3.1-2.7 0 0 .8-.3 2.8 1a9.5 9.5 0 0 1 5 0c1.9-1.3 2.7-1 2.7-1 .5 1.4.2 2.4.1 2.7.6.7 1 1.6 1 2.7 0 3.9-2.4 4.8-4.6 5 .4.3.7.9.7 1.9v2.8c0 .3.2.6.7.5A10 10 0 0 0 12 2z"/></svg>View on GitHub</a>
     </div>
     <div class="dots" role="img" aria-label="A reference graph: declarations reached from the app entry point lit in orange, declarations nothing reaches dimmed below"><canvas id="dots" title="Click to replay"></canvas></div>
@@ -197,7 +197,7 @@ Bridge.swift:8: <span class="w">warning</span>: Unused property 'tag'
   <div class="wrap">
     <p class="eyebrow">Install</p>
     <h2>Up and running in two commands</h2>
-    <p class="sub">Lethen loads Xcode's indexing library at launch, so macOS needs Xcode or the Command Line Tools installed.</p>
+    <p class="sub">On macOS, Xcode or the Command Line Tools must be installed.</p>
     <div class="grid install">
       <div class="card">
         <h3>Homebrew (Apple silicon)</h3>
@@ -206,28 +206,28 @@ Bridge.swift:8: <span class="w">warning</span>: Unused property 'tag'
       </div>
       <div class="card">
         <h3>macOS zip</h3>
-        <p>Signed and notarized, with a <code>SHA256SUMS</code> file, attached to every <a href="https://github.com/albovsky/lethen/releases/latest">release</a>.</p>
+        <p>Signed and notarized, on every <a href="https://github.com/albovsky/lethen/releases/latest">release</a>.</p>
       </div>
       <div class="card">
         <h3>Linux</h3>
-        <p>Release tarballs for x86_64 and aarch64 need glibc 2.35 or later and Swift 6.3+. <a href="https://github.com/albovsky/lethen#linux">Steps</a>.</p>
+        <p>x86_64 and aarch64 tarballs, glibc 2.35 or later. <a href="https://github.com/albovsky/lethen#linux">Steps</a>.</p>
       </div>
       <div class="card">
         <h3>From source</h3>
 <pre><span class="d">$ </span>git clone https://github.com/albovsky/lethen
 <span class="d">$ </span>cd lethen
 <span class="d">$ </span>swift build -c release --product lethen</pre>
-        <p>The only route for Intel Macs.</p>
+        <p>Also the route for Intel Macs.</p>
       </div>
     </div>
     <h3 class="gap">Then scan</h3>
 <pre><span class="d">$ </span>lethen scan --project-root /path/to/project</pre>
-    <p class="note">Xcode projects need <code>--project App.xcodeproj --schemes App</code>. See <a href="https://github.com/albovsky/lethen/blob/master/docs/guide.md">the guide</a> for each project type.</p>
+    <p class="note">Xcode projects: <code>--project App.xcodeproj --schemes App</code>. <a href="https://github.com/albovsky/lethen/blob/master/docs/guide.md">Guide</a>.</p>
     <h3 class="gap">In GitHub Actions</h3>
 <pre>- uses: albovsky/lethen@&lt;version&gt;
   with:
     baseline: baseline.json</pre>
-    <p class="note">The action is available from release 3.10.0, so use a version tag at or after it. On Linux, run the job in a Swift 6.3 or later container, such as <code>swift:6.4-noble</code>.</p>
+    <p class="note">Release 3.10.0 or later. On Linux, use a Swift 6.3+ container such as <code>swift:6.4-noble</code>.</p>
   </div>
 </section>
 </main>
@@ -236,7 +236,7 @@ Bridge.swift:8: <span class="w">warning</span>: Unused property 'tag'
   <div class="wrap cols">
     <div>
       <strong>Lethen</strong><br>
-      An independent fork of the MIT-licensed Periphery by Ian Leitch. Not affiliated with or endorsed by the commercial Periphery product.
+      A fork of the MIT-licensed Periphery by Ian Leitch. Not affiliated with the commercial Periphery product.
     </div>
     <ul>
       <li><a href="https://github.com/albovsky/lethen">GitHub</a></li>
