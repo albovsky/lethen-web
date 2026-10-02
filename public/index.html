@@ -474,16 +474,15 @@ document.querySelectorAll("[data-copy]").forEach(function (b) {
   if (window.matchMedia) window.matchMedia("(prefers-color-scheme: light)").addEventListener("change", function () { if (!raf) settle(); });
 })();
 
-// Hero background: a faint field of pixels. Now and then a small block of
-// them lights up orange, holds and fades, like findings surfacing in a
-// codebase. Reduced motion shows a still frame with a few blocks lit.
+// Hero background: a faint, still field of pixels with a few blocks lit in
+// orange, like findings on a map of the code. Nothing moves; it is redrawn
+// only on resize and when the colour scheme changes.
 (function () {
   var c = document.getElementById("bg");
   if (!c || !c.getContext) return;
-  var CELL = 16, P = 3, SLOTS = 7, PERIOD = 8, IN = 0.7, HOLD = 2.6, OUT = 1.4;
-  var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var CELL = 16, P = 3, BLOCKS = 5;
   function rnd(seed) { var x = Math.sin(seed * 9999.1) * 10000; return x - Math.floor(x); }
-  function draw(t) {
+  function draw() {
     var dpr = window.devicePixelRatio || 1, w = c.clientWidth, h = c.clientHeight;
     if (!w || !h) return;
     var bw = Math.round(w * dpr), bh = Math.round(h * dpr);
@@ -498,36 +497,17 @@ document.querySelectorAll("[data-copy]").forEach(function (b) {
       ctx.globalAlpha = 0.05 + 0.04 * rnd(x * 3 + y * 17);
       ctx.fillRect(x * CELL + 6, y * CELL + 6, P, P);
     }
-    // Each slot shows one block per period, staggered so a few are lit at once.
-    ctx.fillStyle = accent;
-    for (var s = 0; s < SLOTS; s++) {
-      var local = t + (s / SLOTS) * PERIOD, cyc = Math.floor(local / PERIOD), u = local - cyc * PERIOD;
-      var env = u < IN ? u / IN : u < IN + HOLD ? 1 : u < IN + HOLD + OUT ? 1 - (u - IN - HOLD) / OUT : 0;
-      if (env <= 0) continue;
-      var seed = s * 977 + cyc * 31;
-      var bw2 = 2 + Math.floor(rnd(seed + 1) * 5), bh2 = 1 + Math.floor(rnd(seed + 2) * 3);
+    ctx.fillStyle = accent; ctx.globalAlpha = 0.35;
+    for (var k = 0; k < BLOCKS; k++) {
+      var seed = k * 977 + 7, bw2 = 2 + Math.floor(rnd(seed + 1) * 5), bh2 = 1 + Math.floor(rnd(seed + 2) * 3);
       var bx = Math.floor(rnd(seed + 3) * (cols - bw2)), by = Math.floor(rnd(seed + 4) * (rows - bh2));
-      ctx.globalAlpha = 0.5 * env;
-      for (var yy = by; yy < by + bh2; yy++) for (var xx = bx; xx < bx + bw2; xx++) {
-        ctx.fillRect(xx * CELL + 5, yy * CELL + 5, P + 2, P + 2);
-      }
+      for (var yy = by; yy < by + bh2; yy++) for (var xx = bx; xx < bx + bw2; xx++) ctx.fillRect(xx * CELL + 5, yy * CELL + 5, P + 2, P + 2);
     }
     ctx.globalAlpha = 1;
   }
-  if (reduce) {
-    draw(2);
-    window.addEventListener("resize", function () { draw(2); });
-    if (window.matchMedia) window.matchMedia("(prefers-color-scheme: light)").addEventListener("change", function () { draw(2); });
-    return;
-  }
-  var start = null, visible = true;
-  function frame(now) {
-    if (start === null) start = now;
-    if (visible) draw((now - start) / 1000);
-    requestAnimationFrame(frame);
-  }
-  if ("IntersectionObserver" in window) new IntersectionObserver(function (e) { visible = e[0].isIntersecting; }).observe(c);
-  requestAnimationFrame(frame);
+  draw();
+  var t; window.addEventListener("resize", function () { clearTimeout(t); t = setTimeout(draw, 100); });
+  if (window.matchMedia) window.matchMedia("(prefers-color-scheme: light)").addEventListener("change", draw);
 })();
 
 // Mark the nav link of the section that sits under the top third of the viewport.
