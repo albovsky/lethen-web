@@ -15,7 +15,7 @@
     color-scheme: light;
   }
   /* The terminal stays dark in both themes. */
-  .term, .cmd, pre, .mini { --fg: #e4e4e4; --strong: #fafafa; --muted: #8f8f8f; --accent: #f05138; --warn: #e8c547; --comment: #6f6f6f; --line: #2a2a2a; }
+  .term, .cmd, pre, .mini { --fg: #e4e4e4; --strong: #fafafa; --muted: #8f8f8f; --accent: #f05138; --warn: #e8c547; --comment: #6f6f6f; --line: #2a2a2a; --line-strong: #3d3d3d; --card-2: #1c1c1c; }
 }
 
 * { box-sizing: border-box; }
@@ -135,7 +135,7 @@ p.sub { color: var(--muted); margin-top: 12px; max-width: 60ch; font-size: 1.02r
 .stat small { font: 500 .85rem var(--sans); color: var(--muted); letter-spacing: 0; margin-left: 8px; }
 
 /* Open source band with the dot-matrix canvas */
-.band { border-top: 1px solid var(--line); background: var(--card); overflow: hidden; }
+.band { border-top: 1px solid var(--line); background: var(--card); overflow: hidden; scroll-margin-top: 56px; }
 .band .wrap { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); gap: 32px; align-items: center; min-height: 280px; }
 .band h2 { font: 600 clamp(1.5rem, 2.6vw, 2rem)/1.2 var(--sans); letter-spacing: -.02em; color: var(--strong); }
 .band p { color: var(--muted); margin-top: 12px; max-width: 48ch; }
