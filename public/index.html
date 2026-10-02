@@ -481,7 +481,7 @@ document.querySelectorAll("[data-copy]").forEach(function (b) {
 (function () {
   var c = document.getElementById("bg");
   if (!c || !c.getContext) return;
-  var CELL = 16, P = 3, PERIOD = 9, SWEEP = 5;
+  var CELL = 16, P = 3, PERIOD = 12, SWEEP = 7;
   var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   function rnd(seed) { var x = Math.sin(seed * 9999.1) * 10000; return x - Math.floor(x); }
   function draw(t) {
@@ -496,19 +496,19 @@ document.querySelectorAll("[data-copy]").forEach(function (b) {
     var u = t % PERIOD, cyc = Math.floor(t / PERIOD), scanX = (u / SWEEP) * w;
     var cols = Math.ceil(w / CELL), rows = Math.ceil(h / CELL);
     for (var y = 0; y < rows; y++) for (var x = 0; x < cols; x++) {
-      var px = x * CELL + 6, py = y * CELL + 6, a = 0.10 + 0.06 * rnd(x * 3 + y * 17);
-      var dead = !reduce && rnd(x * 131 + y * 7 + cyc * 3) < 0.035;
+      var px = x * CELL + 6, py = y * CELL + 6, a = 0.05 + 0.04 * rnd(x * 3 + y * 17);
+      var dead = !reduce && rnd(x * 131 + y * 7 + cyc * 3) < 0.02;
       if (dead && px < scanX) {
         var since = (scanX - px) / w * SWEEP; // seconds since the scan passed this pixel
-        if (since < 0.6) { ctx.globalAlpha = 0.9; ctx.fillStyle = accent; ctx.fillRect(px - 1, py - 1, P + 2, P + 2); continue; }
+        if (since < 0.6) { ctx.globalAlpha = 0.5; ctx.fillStyle = accent; ctx.fillRect(px, py, P, P); continue; }
         var fall = since - 0.6;
-        if (fall < 1.6) { ctx.globalAlpha = 0.9 * (1 - fall / 1.6); ctx.fillStyle = accent; ctx.fillRect(px, py + fall * fall * 60, P, P); }
+        if (fall < 1.6) { ctx.globalAlpha = 0.5 * (1 - fall / 1.6); ctx.fillStyle = accent; ctx.fillRect(px, py + fall * fall * 60, P, P); }
         else if (u > SWEEP + 1.5) { ctx.globalAlpha = a * Math.min(1, (u - SWEEP - 1.5) / 1.5); ctx.fillStyle = fg; ctx.fillRect(px, py, P, P); }
         continue;
       }
       ctx.globalAlpha = a; ctx.fillStyle = fg; ctx.fillRect(px, py, P, P);
     }
-    if (!reduce && u < SWEEP) { ctx.globalAlpha = 0.5; ctx.fillStyle = accent; ctx.fillRect(scanX, 0, 1, h); }
+    if (!reduce && u < SWEEP) { ctx.globalAlpha = 0.2; ctx.fillStyle = accent; ctx.fillRect(scanX, 0, 1, h); }
     ctx.globalAlpha = 1;
   }
   if (reduce) {
