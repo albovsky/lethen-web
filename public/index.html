@@ -85,9 +85,11 @@ No declaration in the scanned modules references it.
     <h2>Built for real projects</h2>
     <p class="sub">Lethen scans SwiftPM packages, Xcode projects and Bazel workspaces, and keeps the configuration you already have.</p>
     <div class="grid">
-      <div class="card span2">
-        <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m8.5 12 2.5 2.5 4.5-5"/></svg>Confidence and reasons</h3>
-        <p>Every result is <b>certain</b> or <b>likely</b>, with a one-sentence reason. <code>--min-confidence</code> filters on it, so CI can fail only on what Lethen is sure about.</p>
+      <div class="card feature-wide">
+        <div>
+          <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m8.5 12 2.5 2.5 4.5-5"/></svg>Confidence and reasons</h3>
+          <p>Every result is <b>certain</b> or <b>likely</b>, with a one-sentence reason. <code>--min-confidence</code> filters on it, so CI can fail only on what Lethen is sure about.</p>
+        </div>
         <div class="vis mini">Store.swift:12: <span class="w">warning</span>: Unused function 'reload()'
   <span class="a">certain</span>  no references in the scanned modules
 Bridge.swift:8: <span class="w">warning</span>: Unused property 'tag'
@@ -96,7 +98,7 @@ Bridge.swift:8: <span class="w">warning</span>: Unused property 'tag'
       <div class="card">
         <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.7.3-1 .9-1 1.7"/><path d="M12 17h.01"/></svg><code>lethen explain</code></h3>
         <p>Answers "why is this used or unused" with the <b>shortest reference chain</b> or the rule that retained it.</p>
-        <div class="vis chain"><span>Store.load()</span><span class="arr">←</span><span>Feed.refresh()</span><span class="arr">←</span><span class="end">@main App</span></div>
+        <div class="vis chain"><span>Store.load()</span><span class="arr">←</span><span>Feed.refresh()</span><span class="arr">←</span><span class="end">App</span></div>
       </div>
       <div class="card">
         <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h7l2 3h7v8H4z"/><path d="M4 7V5h5l2 2"/></svg>Objective-C aware</h3>
@@ -105,19 +107,19 @@ Bridge.swift:8: <span class="w">warning</span>: Unused property 'tag'
       </div>
       <div class="card">
         <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3 8 4.5v9L12 21l-8-4.5v-9z"/><path d="M12 12 4 7.5M12 12l8-4.5M12 12v9"/></svg>SwiftPM, Xcode, Bazel</h3>
-        <p>Managed SwiftPM scans, Xcode schemes and configurations, and Bazel mode. Pass an index store with <code>--skip-build</code> to <b>reuse your own build</b>.</p>
+        <p>Managed SwiftPM scans, Xcode schemes and configurations, and Bazel mode. Or <b>reuse your own build</b> with <code>--skip-build</code>.</p>
         <div class="vis chips"><span class="chip">Package.swift</span><span class="chip">.xcodeproj</span><span class="chip">WORKSPACE</span></div>
       </div>
       <div class="card">
         <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 5 6v5c0 4.5 3 8.3 7 9.5 4-1.2 7-5 7-9.5V6z"/><path d="m9 12 2 2 4-4"/></svg>Never reads a stale index</h3>
         <p>A SwiftPM build is reused only when Lethen can <b>verify its index</b>; otherwise it cleans and rebuilds. <code>--clean-build</code> always cleans.</p>
-        <div class="vis steps"><span>build</span><span class="arr">→</span><span>verify</span><span class="arr">→</span><span class="hi">reuse</span><span class="arr">or</span><span>clean</span></div>
+        <div class="vis steps"><span>build</span><span class="arr">→</span><span>verify</span><span class="arr">→</span><i><span class="hi">reuse</span><span class="arr">or</span><span>clean</span></i></div>
       </div>
       <div class="card">
         <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="2.5"/><circle cx="6" cy="18" r="2.5"/><circle cx="18" cy="9" r="2.5"/><path d="M6 8.5v7M18 11.5c0 3-3 4-6 4H8.5"/></svg>GitHub Action and plugin</h3>
-        <p><code>uses: albovsky/lethen@&lt;version&gt;</code> <b>annotates unused code on pull requests</b>. A SwiftPM command plugin runs it from a package or Xcode.</p>
-        <div class="vis mini"><span class="a">✓</span> lethen: <span class="s">2 new</span> unused
-  reload()  Store.swift:12</div>
+        <p>The action <b>annotates unused code on pull requests</b>. A SwiftPM command plugin runs the same scan from a package or Xcode.</p>
+        <div class="vis mini"><span class="s">uses:</span> albovsky/lethen@v3
+<span class="a">✓</span> 2 new unused, 0 fixed</div>
       </div>
       <div class="card">
         <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h13l-3-3M20 16H7l3 3"/></svg>Periphery compatible</h3>
@@ -427,10 +429,14 @@ document.querySelectorAll("[data-copy]").forEach(function (b) {
       var short = small ? n.l.replace(/^[A-Za-z]+\./, "") : n.l;
       // Label above the node for the top row and below for the bottom row, to the side otherwise.
       var tag = n.dead ? (n.likely ? "likely" : "unused") : "";
-      ctx.textAlign = right ? "left" : "right";
-      var lx = right ? x + r + 7 : x - r - 7;
-      ctx.fillText(short, lx, y);
-      if (tag) { ctx.fillStyle = n.likely ? warn : muted; ctx.fillText(tag, lx, y + 14); }
+      if (!right && !n.dead) { // right edge: label under the node, clear of the incoming edges
+        ctx.textAlign = "right"; ctx.fillText(short, x + r, y + r + 14);
+      } else {
+        ctx.textAlign = right ? "left" : "right";
+        var lx = right ? x + r + 7 : x - r - 7;
+        ctx.fillText(short, lx, y);
+        if (tag) { ctx.fillStyle = n.likely ? warn : muted; ctx.fillText(tag, lx, y + 14); }
+      }
     });
     ctx.globalAlpha = 1;
   }
