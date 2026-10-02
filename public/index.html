@@ -33,6 +33,7 @@
 <main id="top">
 <div class="wrap hero">
   <div>
+    <canvas class="bird" id="bird" width="176" height="120" aria-hidden="true"></canvas>
     <h1>Find dead code in Swift. See why it is dead.</h1>
     <p class="lead">Lethen reads the compiler's index store, so it sees what the compiler sees. Every finding is <code>certain</code> or <code>likely</code>, with the reference chain to prove it.</p>
     <div class="cmd"><span class="p">$</span><code>brew install albovsky/tap/lethen</code><button type="button" data-copy="brew install albovsky/tap/lethen">Copy</button></div>
@@ -461,6 +462,57 @@ document.querySelectorAll("[data-copy]").forEach(function (b) {
   } else { settle(); }
   var t; window.addEventListener("resize", function () { clearTimeout(t); t = setTimeout(function () { if (!raf) settle(); }, 100); });
   if (window.matchMedia) window.matchMedia("(prefers-color-scheme: light)").addEventListener("change", function () { if (!raf) settle(); });
+})();
+
+// Pixel swift above the headline. The bird is drawn as curves on a 44 x 30
+// grid and quantised to pixels, so the wing stroke is a continuous animation
+// rather than hand-drawn frames. Reduced motion shows one still frame.
+(function () {
+  var c = document.getElementById("bird");
+  if (!c || !c.getContext) return;
+  var W = 44, H = 30, S = 4;
+  var off = document.createElement("canvas"); off.width = W; off.height = H;
+  var o = off.getContext("2d");
+  var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  function shape(k) { // k: wing span, 1 spread, 0.55 mid-stroke
+    o.clearRect(0, 0, W, H);
+    o.fillStyle = "#fff"; o.strokeStyle = "#fff"; o.lineCap = "round"; o.lineWidth = 1.6;
+    o.beginPath(); o.ellipse(22, 14.5, 1.9, 6, 0, 0, Math.PI * 2); o.fill();
+    o.beginPath(); o.arc(22, 7.2, 2, 0, Math.PI * 2); o.fill();
+    o.beginPath(); o.moveTo(22, 20); o.lineTo(19.8, 26); o.stroke();
+    o.beginPath(); o.moveTo(22, 20); o.lineTo(24.2, 26); o.stroke();
+    [-1, 1].forEach(function (s) {
+      var tx = 22 + s * 20 * k, ty = 28 - 10 * (1 - k);
+      o.beginPath(); o.moveTo(22, 10);
+      o.quadraticCurveTo(22 + s * 15 * k, 7 + 2 * (1 - k), tx, ty);
+      o.quadraticCurveTo(22 + s * 10 * k, 14 - 2 * (1 - k), 22 + s * 1.5, 14);
+      o.closePath(); o.fill();
+    });
+  }
+  function draw(k, bob) {
+    var dpr = window.devicePixelRatio || 1;
+    var bw = Math.round(W * S * dpr), bh = Math.round(H * S * dpr);
+    if (c.width !== bw || c.height !== bh) { c.width = bw; c.height = bh; }
+    var ctx = c.getContext("2d"); ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, W * S, H * S);
+    shape(k);
+    var d = o.getImageData(0, 0, W, H).data;
+    ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue("--accent").trim() || "#f05138";
+    for (var y = 0; y < H; y++) for (var x = 0; x < W; x++) {
+      if (d[(y * W + x) * 4 + 3] > 110) ctx.fillRect(x * S, (y + bob) * S, S, S);
+    }
+  }
+  if (reduce) { draw(1, 0); return; }
+  var start = null;
+  function frame(now) {
+    if (start === null) start = now;
+    var t = (now - start) / 1000;
+    var k = 0.775 + 0.225 * Math.cos(t * 2 * Math.PI / 1.4); // one wingbeat per 1.4 s
+    var bob = Math.round(Math.sin(t * 2 * Math.PI / 2.8)); // a pixel of lift per two beats
+    draw(k, bob);
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
 })();
 
 // Mark the nav link of the section in view.
