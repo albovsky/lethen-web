@@ -264,17 +264,23 @@ document.querySelectorAll("[data-copy]").forEach(function (b) {
 });
 
 // The hero terminal types its two commands and prints the output line by line.
-// The full transcript is in the HTML, so it reads completely without JavaScript
-// and when the visitor prefers reduced motion.
+// The full transcript stays in the HTML, so it reads completely without
+// JavaScript and when the visitor prefers reduced motion. With motion on, the
+// transcript is only visually hidden and an aria-hidden copy is animated, so
+// assistive technology always sees the whole output.
 (function () {
-  var screen = document.getElementById("screen");
+  var transcript = document.getElementById("screen");
   var replay = document.getElementById("replay");
-  if (!screen || !replay) return;
+  if (!transcript || !replay) return;
   var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   if (reduce) return;
-  var finalHTML = screen.innerHTML;
+  var finalHTML = transcript.innerHTML;
   var lines = finalHTML.replace(/\n$/, "").split("\n");
   var timer = null;
+  var screen = document.createElement("pre");
+  screen.setAttribute("aria-hidden", "true");
+  transcript.classList.add("visually-hidden");
+  transcript.parentNode.insertBefore(screen, transcript.nextSibling);
 
   function stop() { if (timer) { clearTimeout(timer); timer = null; } }
 
