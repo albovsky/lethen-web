@@ -368,7 +368,8 @@ document.querySelectorAll("[data-copy]").forEach(function (b) {
     var dpr = window.devicePixelRatio || 1;
     var w = c.clientWidth, h = c.clientHeight;
     if (!w || !h) return;
-    if (c.width !== Math.round(w * dpr)) { c.width = w * dpr; c.height = h * dpr; }
+    var bw = Math.round(w * dpr), bh = Math.round(h * dpr);
+    if (c.width !== bw || c.height !== bh) { c.width = bw; c.height = bh; }
     var ctx = c.getContext("2d"); ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     var cs = getComputedStyle(document.documentElement);
     var accent = cs.getPropertyValue("--accent").trim() || "#f05138";
