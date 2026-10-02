@@ -1,12 +1,12 @@
 <!doctype html>
-<!-- Deployed from main by Cloudflare Workers Builds, 2026-10-02 -->
+<!-- Deployed from main by Cloudflare Workers Builds -->
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Lethen: find unused Swift code</title>
 <meta name="description" content="Lethen finds unused code in Swift projects. Every result carries a confidence and a reason. Works with SwiftPM, Xcode and Bazel, on macOS and Linux.">
-<meta name="color-scheme" content="light dark">
+<meta name="color-scheme" content="dark light">
 <meta property="og:title" content="Lethen: find unused Swift code">
 <meta property="og:description" content="Every result carries a confidence and a reason, and `lethen explain` shows why a declaration is used or unused.">
 <meta property="og:type" content="website">
@@ -17,27 +17,44 @@
 <body>
 <header class="top">
   <div class="wrap">
-    <a class="brand" href="#top">Lethen<span>.</span></a>
+    <a class="brand" href="#top">lethen<i>_</i></a>
     <nav aria-label="Main">
-      <a class="hide-sm" href="#how">How it works</a>
-      <a class="hide-sm" href="#trust">Accuracy</a>
-      <a href="#install">Install</a>
-      <a href="https://github.com/albovsky/lethen/blob/master/docs/guide.md">Docs</a>
-      <a href="https://github.com/albovsky/lethen">GitHub</a>
+      <a class="hide-sm" href="#how">how it works</a>
+      <a class="hide-sm" href="#trust">accuracy</a>
+      <a href="#install">install</a>
+      <a href="https://github.com/albovsky/lethen/blob/master/docs/guide.md">docs</a>
+      <a href="https://github.com/albovsky/lethen">github</a>
     </nav>
   </div>
 </header>
 
 <main id="top">
 <div class="wrap hero">
-  <h1>Find unused Swift code you can trust.</h1>
-  <p class="lead">Lethen is an open-source dead-code analyzer for Swift. It reads the compiler's index store, so it sees what the compiler sees, and it tells you how sure it is and why for every result.</p>
-  <div class="install">
-    <div class="cmd"><code>brew install albovsky/tap/lethen</code><button type="button" data-copy="brew install albovsky/tap/lethen">Copy</button></div>
-    <a class="btn" href="#install">Other ways to install</a>
-    <a class="btn" href="https://github.com/albovsky/lethen/blob/master/docs/guide.md">Read the guide</a>
+  <div>
+    <h1>Unused-code analysis for Swift, with a reason for every result.</h1>
+    <p class="lead">Lethen reads the compiler's index store, so it sees what the compiler sees. Each finding is <code>certain</code> or <code>likely</code>, and <code>lethen explain</code> shows the reference chain behind it. Open source, MIT licensed.</p>
+    <div class="cmd"><span class="p">$</span><code>brew install albovsky/tap/lethen</code><button type="button" data-copy="brew install albovsky/tap/lethen">Copy</button></div>
+    <p class="links"><a href="#install">Other ways to install</a><a href="https://github.com/albovsky/lethen/blob/master/docs/guide.md">Read the guide</a></p>
+    <p class="note">Apple silicon Macs (the package minimum is macOS 15, but runs on macOS 15 are not yet verified; macOS 26 and 27 are) and Linux (x86_64, aarch64). Needs Swift 6.3 or later to build your project. MIT licensed. No account or paid plan needed. Confidence levels, <code>lethen explain</code>, <code>--min-confidence</code> and the GitHub Action are in release 3.10.0 and later.</p>
   </div>
-  <p class="note">Apple silicon Macs (the package minimum is macOS 15, but runs on macOS 15 are not yet verified; macOS 26 and 27 are) and Linux (x86_64, aarch64). Needs Swift 6.3 or later to build your project. MIT licensed. No account or paid plan needed. Confidence levels, <code>lethen explain</code>, <code>--min-confidence</code> and the GitHub Action are in release 3.10.0 and later.</p>
+  <div class="term" id="term">
+    <div class="tb"><span>~/Projects/Store</span><span>lethen scan</span></div>
+<pre id="screen" aria-live="off"><span class="d">$ lethen scan --verbose</span>
+Sources/Store.swift:12:10: <span class="w">warning</span>: Unused function 'reload()'
+    reason: no references in the scanned modules
+Sources/Cache.swift:40:7: <span class="w">warning</span>: Unused class 'LegacyCache'
+    reason: only referenced by unused code
+Sources/Bridge.swift:8:16: <span class="w">warning</span>: Unused property 'tag'
+    confidence: likely
+    reason: Objective-C could reach this by name
+<span class="g">3 results, 1 likely.</span>
+
+<span class="d">$ lethen explain Store.reload</span>
+<span class="s">Store.reload()</span> is unused: certain.
+No declaration in the scanned modules references it.
+</pre>
+    <button type="button" class="replay" id="replay" hidden>Replay</button>
+  </div>
 </div>
 
 <section id="how">
@@ -46,18 +63,13 @@
     <p class="sub">Each result is <code>certain</code> or <code>likely</code>. <code>likely</code> means a dynamic feature, such as Objective-C or a name in a string literal, could reach the declaration without a reference Lethen can see. <code>lethen explain</code> shows the reference chain, the rule that retained a declaration, or the only unused code that mentions it.</p>
     <div class="two">
       <div>
-        <p class="tabs-label">Scan</p>
-<pre><span class="d">$ lethen scan --verbose</span>
-Sources/Store.swift:12:10: <span class="w">warning</span>: Unused function 'reload()'
-    reason: no references in the scanned modules
-<span class="d">3 results, 1 likely. `lethen explain &lt;name&gt;` shows why;
-`--write-baseline baseline.json` records these so the
-next scan reports only new ones.</span></pre>
+        <p class="label">Gate CI on what Lethen is sure about</p>
+<pre><span class="d">$ </span>lethen scan --min-confidence certain --strict</pre>
+        <p class="note">Record today's results once with <code>--write-baseline baseline.json</code>, then the next scan reports only new ones.</p>
       </div>
       <div>
-        <p class="tabs-label">Gate CI on what Lethen is sure about</p>
-<pre><span class="d">$ lethen scan --min-confidence certain --strict</span>
-<span class="d">$ lethen explain Store.load</span></pre>
+        <p class="label">Ask why something is used or unused</p>
+<pre><span class="d">$ </span>lethen explain Store.load</pre>
         <p class="note">Output formats include <code>xcode</code>, <code>json</code>, <code>csv</code>, <code>github-actions</code>, <code>github-markdown</code>, <code>gitlab-codequality</code> and <code>codeclimate</code>.</p>
       </div>
     </div>
@@ -69,14 +81,14 @@ next scan reports only new ones.</span></pre>
     <h2>Built for real projects</h2>
     <p class="sub">Lethen scans SwiftPM packages, Xcode projects and Bazel workspaces, and keeps the configuration you already have.</p>
     <div class="grid">
-      <div class="card"><h3>Confidence and reasons</h3><p>Every result is <code>certain</code> or <code>likely</code> with a one-sentence reason. <code>--min-confidence</code> filters on it.</p></div>
-      <div class="card"><h3><code>lethen explain</code></h3><p>Answers "why is this used or unused" with the shortest reference chain or the retaining rule.</p></div>
-      <div class="card"><h3>Objective-C aware</h3><p>Reads the index clang writes for Objective-C files, so a Swift declaration called from a <code>.m</code> file counts as used.</p></div>
-      <div class="card"><h3>SwiftPM, Xcode, Bazel</h3><p>Managed SwiftPM scans, Xcode schemes and configurations, and Bazel mode. Pass an index store with <code>--skip-build</code> to reuse your own build.</p></div>
-      <div class="card"><h3>Never reads a stale index</h3><p>A SwiftPM build is reused only when Lethen can verify its index; otherwise it cleans and rebuilds. <code>--clean-build</code> always cleans.</p></div>
-      <div class="card"><h3>GitHub Action and plugin</h3><p>From release 3.10.0, <code>uses: albovsky/lethen@&lt;version&gt;</code> annotates unused code on pull requests, and a SwiftPM command plugin runs it from a package or Xcode.</p></div>
-      <div class="card"><h3>Baselines</h3><p>Record today's results once, then fail only on new ones.</p></div>
-      <div class="card"><h3>Periphery compatible</h3><p><code>.periphery.yml</code>, <code>// periphery:ignore</code> comments and the <code>PeripheryKit</code> library name keep working.</p></div>
+      <div><h3>Confidence and reasons</h3><p>Every result is <code>certain</code> or <code>likely</code> with a one-sentence reason. <code>--min-confidence</code> filters on it.</p></div>
+      <div><h3><code>lethen explain</code></h3><p>Answers "why is this used or unused" with the shortest reference chain or the retaining rule.</p></div>
+      <div><h3>Objective-C aware</h3><p>Reads the index clang writes for Objective-C files, so a Swift declaration called from a <code>.m</code> file counts as used.</p></div>
+      <div><h3>SwiftPM, Xcode, Bazel</h3><p>Managed SwiftPM scans, Xcode schemes and configurations, and Bazel mode. Pass an index store with <code>--skip-build</code> to reuse your own build.</p></div>
+      <div><h3>Never reads a stale index</h3><p>A SwiftPM build is reused only when Lethen can verify its index; otherwise it cleans and rebuilds. <code>--clean-build</code> always cleans.</p></div>
+      <div><h3>GitHub Action and plugin</h3><p>From release 3.10.0, <code>uses: albovsky/lethen@&lt;version&gt;</code> annotates unused code on pull requests, and a SwiftPM command plugin runs it from a package or Xcode.</p></div>
+      <div><h3>Baselines</h3><p>Record today's results once, then fail only on new ones.</p></div>
+      <div><h3>Periphery compatible</h3><p><code>.periphery.yml</code>, <code>// periphery:ignore</code> comments and the <code>PeripheryKit</code> library name keep working.</p></div>
     </div>
   </div>
 </section>
@@ -84,28 +96,18 @@ next scan reports only new ones.</span></pre>
 <section id="trust">
   <div class="wrap">
     <h2>Accuracy, measured in the open</h2>
-    <p class="sub">Every analysis change re-scans a corpus of pinned open-source projects, and each changed finding is checked by hand against the project's source before it is recorded.</p>
-    <div class="two">
-      <div class="card">
-        <div class="stat">84.0 % <small>precision</small></div>
-        <p>On 81 sampled findings across Alamofire, swift-nio and Wikipedia iOS. The target is 95 %, so this is not there yet. The first measurement, on 2026-09-27, was 73 %.</p>
-      </div>
-      <div>
-        <div class="table-scroll"><table>
-          <thead><tr><th>Project</th><th class="num">Sampled</th><th class="num">Precision</th></tr></thead>
-          <tbody>
-            <tr><td>Alamofire</td><td class="num">30</td><td class="num">96.7 %</td></tr>
-            <tr><td>swift-nio</td><td class="num">25</td><td class="num">88.0 %</td></tr>
-            <tr><td>Wikipedia iOS</td><td class="num">26</td><td class="num">65.4 %</td></tr>
-          </tbody>
-        </table></div>
-        <p class="note">Precision is true positives over true plus false positives in the sample. <a href="https://github.com/albovsky/lethen/blob/master/docs/validation/precision-corpus.md">Scorecard and method</a>.</p>
-      </div>
+    <p class="sub">Every analysis change re-scans a corpus of pinned open-source projects, and each changed finding is checked by hand against the project's source before it is recorded. Precision is true positives over true plus false positives in the sample: 84.0 % on 81 sampled findings. The target is 95 %, so this is not there yet. The first measurement, on 2026-09-27, was 73 %.</p>
+    <div class="bars" aria-label="Precision by project, against a 95 percent target">
+      <div class="row"><span>Alamofire</span><div class="trk"><div class="fill" style="width:96.7%"></div><div class="tgt"></div></div><b>96.7 %</b></div>
+      <div class="row"><span>swift-nio</span><div class="trk"><div class="fill" style="width:88%"></div><div class="tgt"></div></div><b>88.0 %</b></div>
+      <div class="row"><span>Wikipedia iOS</span><div class="trk"><div class="fill" style="width:65.4%"></div><div class="tgt"></div></div><b>65.4 %</b></div>
+      <div class="row total"><span>All 81 sampled</span><div class="trk"><div class="fill" style="width:84%"></div><div class="tgt"></div></div><b>84.0 %</b></div>
     </div>
+    <p class="legend"><i></i>95 % target. Samples: Alamofire 30, swift-nio 25, Wikipedia iOS 26. <a href="https://github.com/albovsky/lethen/blob/master/docs/validation/precision-corpus.md">Scorecard and method</a>.</p>
 
-    <h3 style="margin-top:36px">Compared with Periphery</h3>
+    <h3 class="gap">Compared with Periphery</h3>
     <p class="sub">Lethen is a fork of <a href="https://github.com/peripheryapp/periphery">Periphery</a> and shares most of its analysis. On 2026-10-02 we scanned five projects (listed below) with Lethen 3.10.0 and Periphery 3.8.0 (the latest upstream release), and checked the differences by reading the source. Results with <code>--retain-public</code>, except Wikipedia iOS.</p>
-    <div class="table-scroll"><table>
+    <div class="table-scroll"><table class="wide">
       <thead><tr><th>Project</th><th class="num">Periphery</th><th class="num">Lethen</th><th>What the differences were</th></tr></thead>
       <tbody>
         <tr><td>swift-format</td><td class="num">29</td><td class="num">29</td><td>Identical.</td></tr>
@@ -129,31 +131,31 @@ next scan reports only new ones.</span></pre>
     <h2>Install</h2>
     <p class="sub">Lethen loads Xcode's indexing library at launch, so macOS needs Xcode or the Command Line Tools installed.</p>
     <div class="grid">
-      <div class="card">
+      <div>
         <h3>Homebrew (Apple silicon)</h3>
-<pre>brew install albovsky/tap/lethen
-lethen version</pre>
+<pre><span class="d">$ </span>brew install albovsky/tap/lethen
+<span class="d">$ </span>lethen version</pre>
       </div>
-      <div class="card">
+      <div>
         <h3>macOS zip</h3>
         <p>Signed and notarized, with a <code>SHA256SUMS</code> file, attached to every <a href="https://github.com/albovsky/lethen/releases/latest">release</a>.</p>
       </div>
-      <div class="card">
+      <div>
         <h3>Linux</h3>
         <p>Release tarballs for x86_64 and aarch64 need glibc 2.35 or later and Swift 6.3+. <a href="https://github.com/albovsky/lethen#linux">Steps</a>.</p>
       </div>
-      <div class="card">
+      <div>
         <h3>From source</h3>
-<pre>git clone https://github.com/albovsky/lethen
-cd lethen
-swift build -c release --product lethen</pre>
-        <p class="note">The only route for Intel Macs.</p>
+<pre><span class="d">$ </span>git clone https://github.com/albovsky/lethen
+<span class="d">$ </span>cd lethen
+<span class="d">$ </span>swift build -c release --product lethen</pre>
+        <p>The only route for Intel Macs.</p>
       </div>
     </div>
-    <h3 style="margin-top:32px">Then scan</h3>
-<pre>lethen scan --project-root /path/to/project</pre>
+    <h3 class="gap">Then scan</h3>
+<pre><span class="d">$ </span>lethen scan --project-root /path/to/project</pre>
     <p class="note">Xcode projects need <code>--project App.xcodeproj --schemes App</code>. See <a href="https://github.com/albovsky/lethen/blob/master/docs/guide.md">the guide</a> for each project type.</p>
-    <h3 style="margin-top:32px">In GitHub Actions</h3>
+    <h3 class="gap">In GitHub Actions</h3>
 <pre>- uses: albovsky/lethen@&lt;version&gt;
   with:
     baseline: baseline.json</pre>
@@ -186,9 +188,69 @@ document.querySelectorAll("[data-copy]").forEach(function (b) {
     navigator.clipboard.writeText(b.dataset.copy).then(function () {
       b.textContent = "Copied";
       setTimeout(function () { b.textContent = "Copy"; }, 1500);
-    });
+    }).catch(function () {});
   });
 });
+
+// The hero terminal types its two commands and prints the output line by line.
+// The full transcript is in the HTML, so it reads completely without JavaScript
+// and when the visitor prefers reduced motion.
+(function () {
+  var screen = document.getElementById("screen");
+  var replay = document.getElementById("replay");
+  if (!screen || !replay) return;
+  var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (reduce) return;
+  var finalHTML = screen.innerHTML;
+  var lines = finalHTML.replace(/\n$/, "").split("\n");
+  var timer = null;
+
+  function stop() { if (timer) { clearTimeout(timer); timer = null; } }
+
+  function play() {
+    stop();
+    replay.hidden = true;
+    screen.innerHTML = "";
+    var i = 0;
+    function next(delay) { timer = setTimeout(step, delay); }
+    function step() {
+      if (i >= lines.length) { replay.hidden = false; timer = null; return; }
+      var line = lines[i++];
+      var isCmd = /^<span class="d">\$ /.test(line);
+      if (isCmd) {
+        var text = line.replace(/<[^>]+>/g, "");
+        var typed = 0;
+        var open = '<span class="d">';
+        function type() {
+          typed++;
+          screen.innerHTML = screen.innerHTML.replace(/<span class="d">[^<]*<span class="caret"><\/span><\/span>$/, "")
+            + open + text.slice(0, typed) + '<span class="caret"></span></span>';
+          if (typed < text.length) { timer = setTimeout(type, 28 + Math.random() * 40); }
+          else { timer = setTimeout(function () {
+            screen.innerHTML = screen.innerHTML.replace(/<span class="caret"><\/span>/, "") + "\n";
+            next(500);
+          }, 350); }
+        }
+        if (screen.innerHTML && !/\n$/.test(screen.innerHTML)) screen.innerHTML += "\n";
+        type();
+      } else {
+        screen.innerHTML += line + "\n";
+        next(line === "" ? 650 : (/warning/.test(line) ? 180 : 90));
+      }
+    }
+    next(600);
+  }
+
+  replay.addEventListener("click", play);
+  var started = false;
+  function start() { if (started) return; started = true; play(); }
+  if ("IntersectionObserver" in window) {
+    var io = new IntersectionObserver(function (entries) {
+      if (entries.some(function (e) { return e.isIntersecting; })) { io.disconnect(); start(); }
+    }, { threshold: 0.4 });
+    io.observe(screen);
+  } else { start(); }
+})();
 </script>
 </body>
 </html>
