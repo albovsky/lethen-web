@@ -4,10 +4,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Lethen: find unused Swift code</title>
+<title>Lethen: find dead code in Swift</title>
 <meta name="description" content="Lethen finds unused code in Swift projects. Every result carries a confidence and a reason. Works with SwiftPM, Xcode and Bazel, on macOS and Linux.">
 <meta name="color-scheme" content="dark light">
-<meta property="og:title" content="Lethen: find unused Swift code">
+<meta property="og:title" content="Lethen: find dead code in Swift. Prove it.">
 <meta property="og:description" content="Every result carries a confidence and a reason, and `lethen explain` shows why a declaration is used or unused.">
 <meta property="og:type" content="website">
 <link rel="canonical" href="https://lethen.dev/">
@@ -33,8 +33,8 @@
 <main id="top">
 <div class="wrap hero">
   <div>
-    <h1>Unused-code analysis for Swift, with a reason for every result.</h1>
-    <p class="lead">Lethen reads the compiler's index store, so it sees what the compiler sees. Each finding is <code>certain</code> or <code>likely</code>, and <code>lethen explain</code> shows the reference chain behind it. Open source, MIT licensed.</p>
+    <h1>Find dead code in Swift. Prove it.</h1>
+    <p class="lead">Lethen reads the compiler's index store, so it sees what the compiler sees. Every finding is <code>certain</code> or <code>likely</code>, and <code>lethen explain</code> shows the reference chain behind it. Open source, MIT licensed.</p>
     <div class="cmd"><span class="p">$</span><code>brew install albovsky/tap/lethen</code><button type="button" data-copy="brew install albovsky/tap/lethen">Copy</button></div>
     <p class="links"><a href="#install">Other ways to install</a><a href="https://github.com/albovsky/lethen/blob/master/docs/guide.md">Read the guide</a></p>
     <p class="note">Apple silicon Macs (the package minimum is macOS 15, but runs on macOS 15 are not yet verified; macOS 26 and 27 are) and Linux (x86_64, aarch64). Needs Swift 6.3 or later to build your project. MIT licensed. No account or paid plan needed. Confidence levels, <code>lethen explain</code>, <code>--min-confidence</code> and the GitHub Action are in release 3.10.0 and later.</p>
