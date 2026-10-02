@@ -474,14 +474,13 @@ document.querySelectorAll("[data-copy]").forEach(function (b) {
   if (window.matchMedia) window.matchMedia("(prefers-color-scheme: light)").addEventListener("change", function () { if (!raf) settle(); });
 })();
 
-// Hero background: a faint field of pixels. Every nine seconds a scan passes
-// across it; the pixels the scan finds unreachable flash orange, fall out of
-// the grid and the grid heals before the next pass. Reduced motion shows the
-// still field.
+// Hero background: a faint field of pixels. Now and then a small block of
+// them lights up orange, holds and fades, like findings surfacing in a
+// codebase. Reduced motion shows a still frame with a few blocks lit.
 (function () {
   var c = document.getElementById("bg");
   if (!c || !c.getContext) return;
-  var CELL = 16, P = 3, PERIOD = 12, SWEEP = 7;
+  var CELL = 16, P = 3, SLOTS = 7, PERIOD = 8, IN = 0.7, HOLD = 2.6, OUT = 1.4;
   var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   function rnd(seed) { var x = Math.sin(seed * 9999.1) * 10000; return x - Math.floor(x); }
   function draw(t) {
@@ -493,28 +492,32 @@ document.querySelectorAll("[data-copy]").forEach(function (b) {
     var cs = getComputedStyle(document.documentElement);
     var accent = cs.getPropertyValue("--accent").trim() || "#f05138";
     var fg = cs.getPropertyValue("--fg").trim() || "#e4e4e4";
-    var u = t % PERIOD, cyc = Math.floor(t / PERIOD), scanX = (u / SWEEP) * w;
     var cols = Math.ceil(w / CELL), rows = Math.ceil(h / CELL);
+    ctx.fillStyle = fg;
     for (var y = 0; y < rows; y++) for (var x = 0; x < cols; x++) {
-      var px = x * CELL + 6, py = y * CELL + 6, a = 0.05 + 0.04 * rnd(x * 3 + y * 17);
-      var dead = !reduce && rnd(x * 131 + y * 7 + cyc * 3) < 0.02;
-      if (dead && px < scanX) {
-        var since = (scanX - px) / w * SWEEP; // seconds since the scan passed this pixel
-        if (since < 0.6) { ctx.globalAlpha = 0.5; ctx.fillStyle = accent; ctx.fillRect(px, py, P, P); continue; }
-        var fall = since - 0.6;
-        if (fall < 1.6) { ctx.globalAlpha = 0.5 * (1 - fall / 1.6); ctx.fillStyle = accent; ctx.fillRect(px, py + fall * fall * 60, P, P); }
-        else if (u > SWEEP + 1.5) { ctx.globalAlpha = a * Math.min(1, (u - SWEEP - 1.5) / 1.5); ctx.fillStyle = fg; ctx.fillRect(px, py, P, P); }
-        continue;
-      }
-      ctx.globalAlpha = a; ctx.fillStyle = fg; ctx.fillRect(px, py, P, P);
+      ctx.globalAlpha = 0.05 + 0.04 * rnd(x * 3 + y * 17);
+      ctx.fillRect(x * CELL + 6, y * CELL + 6, P, P);
     }
-    if (!reduce && u < SWEEP) { ctx.globalAlpha = 0.2; ctx.fillStyle = accent; ctx.fillRect(scanX, 0, 1, h); }
+    // Each slot shows one block per period, staggered so a few are lit at once.
+    ctx.fillStyle = accent;
+    for (var s = 0; s < SLOTS; s++) {
+      var local = t + (s / SLOTS) * PERIOD, cyc = Math.floor(local / PERIOD), u = local - cyc * PERIOD;
+      var env = u < IN ? u / IN : u < IN + HOLD ? 1 : u < IN + HOLD + OUT ? 1 - (u - IN - HOLD) / OUT : 0;
+      if (env <= 0) continue;
+      var seed = s * 977 + cyc * 31;
+      var bw2 = 2 + Math.floor(rnd(seed + 1) * 5), bh2 = 1 + Math.floor(rnd(seed + 2) * 3);
+      var bx = Math.floor(rnd(seed + 3) * (cols - bw2)), by = Math.floor(rnd(seed + 4) * (rows - bh2));
+      ctx.globalAlpha = 0.5 * env;
+      for (var yy = by; yy < by + bh2; yy++) for (var xx = bx; xx < bx + bw2; xx++) {
+        ctx.fillRect(xx * CELL + 5, yy * CELL + 5, P + 2, P + 2);
+      }
+    }
     ctx.globalAlpha = 1;
   }
   if (reduce) {
-    draw(0);
-    window.addEventListener("resize", function () { draw(0); });
-    if (window.matchMedia) window.matchMedia("(prefers-color-scheme: light)").addEventListener("change", function () { draw(0); });
+    draw(2);
+    window.addEventListener("resize", function () { draw(2); });
+    if (window.matchMedia) window.matchMedia("(prefers-color-scheme: light)").addEventListener("change", function () { draw(2); });
     return;
   }
   var start = null, visible = true;
