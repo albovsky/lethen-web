@@ -184,9 +184,10 @@ Sources/Bridge.swift:8:16: <span class="w">warning</span>: Unused property 'tag'
       <p class="eyebrow">Open source</p>
       <h2>Open source, down to every finding</h2>
       <p>MIT licensed, as a fork of Periphery that keeps its license and history. The analysis, the precision corpus, the verdict on every sampled finding and the release pipeline are all in the repository. No account, no telemetry, no paid tier.</p>
+      <p class="note">The graph is what a scan walks: from the entry point through every reference the compiler recorded. Whatever the walk never reaches is reported.</p>
       <a class="btn" href="https://github.com/albovsky/lethen"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-3.2 19.5c.5.1.7-.2.7-.5v-1.8c-2.8.6-3.4-1.2-3.4-1.2-.4-1.2-1.1-1.5-1.1-1.5-.9-.6.1-.6.1-.6 1 .1 1.5 1 1.5 1 .9 1.6 2.4 1.1 3 .9.1-.7.4-1.1.6-1.4-2.2-.2-4.6-1.1-4.6-5 0-1.1.4-2 1-2.7-.1-.3-.4-1.3.1-2.7 0 0 .8-.3 2.8 1a9.5 9.5 0 0 1 5 0c1.9-1.3 2.7-1 2.7-1 .5 1.4.2 2.4.1 2.7.6.7 1 1.6 1 2.7 0 3.9-2.4 4.8-4.6 5 .4.3.7.9.7 1.9v2.8c0 .3.2.6.7.5A10 10 0 0 0 12 2z"/></svg>View on GitHub</a>
     </div>
-    <div class="dots" role="img" aria-label="A reference graph: declarations reached from the app entry point in green, declarations nothing reaches dimmed"><canvas id="dots"></canvas><p class="cap">What a scan walks: from the entry point through every reference the compiler recorded. Nothing reaches the dimmed ones.</p></div>
+    <div class="dots" role="img" aria-label="A reference graph: declarations reached from the app entry point lit in orange, declarations nothing reaches dimmed below"><canvas id="dots" title="Click to replay"></canvas></div>
   </div>
 </div>
 
@@ -317,31 +318,55 @@ document.querySelectorAll("[data-copy]").forEach(function (b) {
   } else { start(); }
 })();
 
-// Reference graph in the open-source band: what a scan walks. Roots on the
-// left, declarations they reach in green, declarations nothing reaches dimmed.
+// Reference graph in the open-source band: what a scan walks. The entry point
+// on the left, declarations it reaches lit in order, declarations nothing
+// reaches dimmed below. Animates once when scrolled into view; draws the final
+// state at once under reduced motion.
 (function () {
   var c = document.getElementById("dots");
   if (!c || !c.getContext) return;
   var nodes = [
-    { id: "app", l: "@main App", x: 0.06, y: 0.5, root: true },
-    { id: "scene", l: "SceneDelegate", x: 0.24, y: 0.22 },
-    { id: "feed", l: "FeedViewModel", x: 0.26, y: 0.56 },
-    { id: "store", l: "Store", x: 0.46, y: 0.4 },
-    { id: "load", l: "Store.load()", x: 0.66, y: 0.26 },
-    { id: "cache", l: "Cache", x: 0.68, y: 0.56 },
-    { id: "parse", l: "Parser.parse()", x: 0.86, y: 0.4 },
-    { id: "reload", l: "Store.reload()", x: 0.64, y: 0.92, dead: true },
-    { id: "legacy", l: "LegacyCache", x: 0.4, y: 0.76, dead: true },
-    { id: "migrate", l: "migrate()", x: 0.14, y: 0.9, dead: true },
-    { id: "tag", l: "Bridge.tag", x: 0.9, y: 0.72, dead: true, likely: true }
+    { id: "app", l: "@main App", x: 0.05, y: 0.30, root: true },
+    { id: "scene", l: "SceneDelegate", x: 0.30, y: 0.12 },
+    { id: "feed", l: "FeedViewModel", x: 0.30, y: 0.46 },
+    { id: "store", l: "Store", x: 0.55, y: 0.29 },
+    { id: "load", l: "Store.load()", x: 0.78, y: 0.12 },
+    { id: "cache", l: "Cache", x: 0.78, y: 0.46 },
+    { id: "parse", l: "Parser.parse()", x: 0.96, y: 0.29 },
+    { id: "legacy", l: "LegacyCache", x: 0.30, y: 0.80, dead: true },
+    { id: "migrate", l: "migrate()", x: 0.05, y: 0.92, dead: true },
+    { id: "reload", l: "Store.reload()", x: 0.60, y: 0.92, dead: true },
+    { id: "tag", l: "Bridge.tag", x: 0.96, y: 0.80, dead: true, likely: true }
   ];
   var edges = [["app","scene"],["app","feed"],["scene","store"],["feed","store"],["store","load"],["store","cache"],["load","parse"],["cache","parse"],["reload","cache"],["legacy","migrate"],["reload","legacy"]];
   var byId = {}; nodes.forEach(function (n) { byId[n.id] = n; });
-  function draw() {
+  // Breadth-first depth from the root decides when each live node lights up.
+  var depth = { app: 0 }, queue = ["app"];
+  while (queue.length) {
+    var cur = queue.shift();
+    edges.forEach(function (e) {
+      if (e[0] === cur && !byId[e[1]].dead && depth[e[1]] === undefined) { depth[e[1]] = depth[cur] + 1; queue.push(e[1]); }
+    });
+  }
+  var STEP = 700, DEAD_AT = 4 * STEP, DEAD_LEN = 900;
+  var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var ease = function (t) { return t < 0 ? 0 : t > 1 ? 1 : 1 - Math.pow(1 - t, 3); };
+  function curve(x1, y1, x2, y2) {
+    var mx = (x1 + x2) / 2, pts = [], len = 0, px = x1, py = y1;
+    for (var i = 0; i <= 24; i++) {
+      var t = i / 24, u = 1 - t;
+      var x = u*u*u*x1 + 3*u*u*t*mx + 3*u*t*t*mx + t*t*t*x2;
+      var y = u*u*u*y1 + 3*u*u*t*y1 + 3*u*t*t*y2 + t*t*t*y2;
+      if (i) len += Math.hypot(x - px, y - py);
+      pts.push([x, y]); px = x; py = y;
+    }
+    return { pts: pts, len: len };
+  }
+  function draw(elapsed) {
     var dpr = window.devicePixelRatio || 1;
     var w = c.clientWidth, h = c.clientHeight;
     if (!w || !h) return;
-    c.width = w * dpr; c.height = h * dpr;
+    if (c.width !== Math.round(w * dpr)) { c.width = w * dpr; c.height = h * dpr; }
     var ctx = c.getContext("2d"); ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     var cs = getComputedStyle(document.documentElement);
     var accent = cs.getPropertyValue("--accent").trim() || "#f05138";
@@ -349,39 +374,86 @@ document.querySelectorAll("[data-copy]").forEach(function (b) {
     var line = cs.getPropertyValue("--line-strong").trim() || "#3d3d3d";
     var strong = cs.getPropertyValue("--strong").trim() || "#fafafa";
     var warn = cs.getPropertyValue("--warn").trim() || "#e8c547";
-    var small = w < 480;
-    var px = function (n) { return 24 + n.x * (w - 48); }, py = function (n) { return 20 + n.y * (h - 40); };
+    var small = w < 520;
+    var padX = small ? 14 : 24, padT = 16, padB = 16;
+    var px = function (n) { return padX + n.x * (w - padX * 2); }, py = function (n) { return padT + n.y * (h - padT - padB); };
+    var font = (small ? "10px " : "12px ") + (cs.getPropertyValue("--mono") || "monospace");
     ctx.clearRect(0, 0, w, h);
-    ctx.lineWidth = 1.5;
+    ctx.font = font; ctx.textBaseline = "middle";
+
+    // Divider between reached and unreached.
+    var divY = py({ y: 0.65 });
+    var deadT = ease((elapsed - DEAD_AT) / DEAD_LEN);
+    ctx.globalAlpha = 0.9 * deadT; ctx.strokeStyle = line; ctx.setLineDash([2, 6]); ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(padX, divY); ctx.lineTo(w - padX, divY); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = muted; ctx.textAlign = "left";
+    ctx.fillText("nothing reaches these", padX, divY + 12);
+    ctx.globalAlpha = 1;
+
+    ctx.lineWidth = 1.6;
     edges.forEach(function (e) {
       var a = byId[e[0]], b = byId[e[1]];
       var dead = a.dead || b.dead;
+      var cv = curve(px(a), py(a), px(b), py(b));
+      var t = dead ? deadT : ease((elapsed - depth[e[0]] * STEP) / STEP);
+      if (t <= 0) return;
       ctx.strokeStyle = dead ? line : accent;
-      ctx.globalAlpha = dead ? 0.9 : 0.55;
-      ctx.setLineDash(dead ? [3, 4] : []);
-      ctx.beginPath();
-      var x1 = px(a), y1 = py(a), x2 = px(b), y2 = py(b), mx = (x1 + x2) / 2;
-      ctx.moveTo(x1, y1); ctx.bezierCurveTo(mx, y1, mx, y2, x2, y2); ctx.stroke();
+      ctx.globalAlpha = dead ? 0.9 : 0.6;
+      ctx.setLineDash(dead ? [3, 4] : [cv.len, cv.len]);
+      ctx.lineDashOffset = dead ? 0 : cv.len * (1 - t);
+      if (dead) { ctx.globalAlpha *= t; }
+      ctx.beginPath(); ctx.moveTo(cv.pts[0][0], cv.pts[0][1]);
+      for (var i = 1; i < cv.pts.length; i++) ctx.lineTo(cv.pts[i][0], cv.pts[i][1]);
+      ctx.stroke();
     });
-    ctx.setLineDash([]); ctx.globalAlpha = 1;
-    ctx.font = (small ? "9px " : "11px ") + (cs.getPropertyValue("--mono") || "monospace");
-    ctx.textBaseline = "middle";
+    ctx.setLineDash([]); ctx.lineDashOffset = 0; ctx.globalAlpha = 1;
+
     nodes.forEach(function (n) {
       var x = px(n), y = py(n), r = n.root ? 6 : 4.5;
+      var t = n.dead ? deadT : ease((elapsed - depth[n.id] * STEP + 200) / 400);
+      if (t <= 0) return;
+      ctx.globalAlpha = t;
+      if (!n.dead && t < 1) { // arrival pulse
+        ctx.beginPath(); ctx.arc(x, y, r + 14 * (1 - t), 0, Math.PI * 2);
+        ctx.strokeStyle = accent; ctx.globalAlpha = (1 - t) * 0.6; ctx.lineWidth = 1.5; ctx.stroke(); ctx.globalAlpha = t;
+      }
       ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2);
-      if (n.dead) { ctx.fillStyle = "rgba(0,0,0,0)"; ctx.strokeStyle = n.likely ? warn : muted; ctx.lineWidth = 1.5; ctx.stroke(); }
+      if (n.dead) { ctx.strokeStyle = n.likely ? warn : muted; ctx.lineWidth = 1.5; ctx.stroke(); }
       else { ctx.fillStyle = accent; ctx.fill(); }
-      if (n.root) { ctx.beginPath(); ctx.arc(x, y, r + 4, 0, Math.PI * 2); ctx.strokeStyle = accent; ctx.globalAlpha = .4; ctx.stroke(); ctx.globalAlpha = 1; }
+      if (n.root) { ctx.beginPath(); ctx.arc(x, y, r + 5, 0, Math.PI * 2); ctx.strokeStyle = accent; ctx.globalAlpha = .4 * t; ctx.lineWidth = 1.5; ctx.stroke(); ctx.globalAlpha = t; }
       ctx.fillStyle = n.dead ? muted : strong;
-      var right = n.x < 0.8;
+      var right = n.x < 0.9;
+      var short = small ? n.l.replace(/^[A-Za-z]+\./, "") : n.l;
+      // Label above the node for the top row and below for the bottom row, to the side otherwise.
+      var tag = n.dead ? (n.likely ? "likely" : "unused") : "";
       ctx.textAlign = right ? "left" : "right";
-      var label = (small ? n.l.replace(/^[A-Za-z]+\./, "") : n.l) + (n.dead ? (n.likely ? "  likely" : "  unused") : "");
-      ctx.fillText(label, right ? x + r + 6 : x - r - 6, y - (n.root ? 0 : 0));
+      var lx = right ? x + r + 7 : x - r - 7;
+      ctx.fillText(short, lx, y);
+      if (tag) { ctx.fillStyle = n.likely ? warn : muted; ctx.fillText(tag, lx, y + 14); }
     });
+    ctx.globalAlpha = 1;
   }
-  draw();
-  var t; window.addEventListener("resize", function () { clearTimeout(t); t = setTimeout(draw, 100); });
-  if (window.matchMedia) window.matchMedia("(prefers-color-scheme: light)").addEventListener("change", draw);
+  var TOTAL = DEAD_AT + DEAD_LEN + 200, start = null, raf = null;
+  function frame(now) {
+    if (start === null) start = now;
+    var e = now - start;
+    draw(e);
+    if (e < TOTAL) raf = requestAnimationFrame(frame); else raf = null;
+  }
+  function play() { if (raf) cancelAnimationFrame(raf); start = null; raf = requestAnimationFrame(frame); }
+  function settle() { draw(TOTAL); }
+  if (reduce) { settle(); }
+  else if ("IntersectionObserver" in window) {
+    var seen = false;
+    var io = new IntersectionObserver(function (entries) {
+      if (!seen && entries.some(function (x) { return x.isIntersecting; })) { seen = true; io.disconnect(); play(); }
+    }, { threshold: 0.5 });
+    io.observe(c);
+    c.addEventListener("click", play);
+  } else { settle(); }
+  var t; window.addEventListener("resize", function () { clearTimeout(t); t = setTimeout(function () { if (!raf) settle(); }, 100); });
+  if (window.matchMedia) window.matchMedia("(prefers-color-scheme: light)").addEventListener("change", function () { if (!raf) settle(); });
 })();
 
 // Mark the nav link of the section in view.
