@@ -114,7 +114,7 @@ pre:not(.term pre) { white-space: pre-wrap; overflow-wrap: anywhere; }
 .chain { font: 500 .78rem var(--mono); display: flex; flex-wrap: wrap; align-items: center; gap: 6px; color: var(--fg); }
 .chain .arr { color: var(--muted); }
 .chain .end { color: var(--accent); }
-.mini { font: 400 .76rem/1.6 var(--mono); color: var(--muted); background: var(--term); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; overflow-x: auto; white-space: pre; }
+.mini { font: 400 .76rem/1.6 var(--mono); color: var(--muted); background: var(--term); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; overflow: hidden; white-space: pre-wrap; overflow-wrap: anywhere; }
 .mini .w { color: var(--warn); } .mini .a { color: var(--accent); } .mini .s { color: var(--strong); }
 .steps { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font: 500 .78rem var(--mono); }
 .steps span { border: 1px solid var(--line); border-radius: 6px; padding: 4px 8px; background: var(--card-2); }
