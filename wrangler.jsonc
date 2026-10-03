@@ -7,7 +7,6 @@
     "not_found_handling": "404-page"
   },
   "previews": {},
-  "preview_urls": true,
   "routes": [
     { "pattern": "lethen.dev", "custom_domain": true },
     { "pattern": "www.lethen.dev", "custom_domain": true }
