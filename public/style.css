@@ -40,7 +40,8 @@ header.top {
   background: color-mix(in srgb, var(--bg) 85%, transparent); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
 }
 header.top .wrap { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 56px; flex-wrap: wrap; }
-.brand { font: 700 1.05rem var(--mono); color: var(--strong); text-decoration: none; }
+.brand { display: inline-flex; align-items: center; gap: .45em; font: 700 1.05rem var(--mono); color: var(--strong); text-decoration: none; }
+.brand svg { width: 1.4em; height: 1.4em; flex-shrink: 0; }
 .brand i { color: var(--accent); font-style: normal; }
 @media (prefers-reduced-motion: no-preference) { .brand i { animation: blink 1.2s steps(1) infinite; } }
 nav { display: flex; gap: 22px; flex-wrap: wrap; }
