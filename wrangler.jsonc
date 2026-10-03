@@ -6,6 +6,7 @@
     "directory": "./public",
     "not_found_handling": "404-page"
   },
+  "previews": {},
   "routes": [
     { "pattern": "lethen.dev", "custom_domain": true },
     { "pattern": "www.lethen.dev", "custom_domain": true }
