@@ -241,8 +241,8 @@ document.querySelectorAll("[data-copy]").forEach(function (b) {
   function rnd(seed) { var x = Math.sin(seed * 9999.1) * 10000; return x - Math.floor(x); }
   function draw(w, h) {
     if (!w || !h) return;
-    size = { w: w, h: h };
     var dpr = window.devicePixelRatio || 1;
+    size = { w: w, h: h, dpr: dpr };
     var bw = Math.round(w * dpr), bh = Math.round(h * dpr);
     if (c.width !== bw || c.height !== bh) { c.width = bw; c.height = bh; }
     var ctx = c.getContext("2d"); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, w, h);
@@ -269,6 +269,14 @@ document.querySelectorAll("[data-copy]").forEach(function (b) {
       var r = entries[entries.length - 1].contentRect, w = Math.round(r.width), h = Math.round(r.height);
       if (!size || size.w !== w || size.h !== h) draw(w, h);
     }).observe(c);
+    // Moving to a screen with another pixel ratio keeps the CSS size, so watch the ratio too.
+    (function watchRatio() {
+      if (!window.matchMedia) return;
+      window.matchMedia("(resolution: " + (window.devicePixelRatio || 1) + "dppx)").addEventListener("change", function () {
+        if (size && size.dpr !== (window.devicePixelRatio || 1)) draw(size.w, size.h);
+        watchRatio();
+      }, { once: true });
+    })();
   } else {
     draw(c.clientWidth, c.clientHeight);
     var t; window.addEventListener("resize", function () { clearTimeout(t); t = setTimeout(function () { draw(c.clientWidth, c.clientHeight); }, 100); });
