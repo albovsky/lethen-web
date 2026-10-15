@@ -24,14 +24,17 @@ document.querySelectorAll("[data-copy]").forEach(function (b) {
   var timer = null;
   var screen = document.createElement("pre");
   screen.setAttribute("aria-hidden", "true");
+  // Keep the box at the full transcript's height and show Replay in the same
+  // step, so the terminal does not change size while it types.
+  screen.style.minHeight = transcript.offsetHeight + "px";
   transcript.classList.add("visually-hidden");
   transcript.parentNode.insertBefore(screen, transcript.nextSibling);
+  replay.hidden = false;
 
   function stop() { if (timer) { clearTimeout(timer); timer = null; } }
 
   function play() {
     stop();
-    replay.hidden = false;
     screen.innerHTML = "";
     var i = 0;
     function next(delay) { timer = setTimeout(step, delay); }
@@ -118,23 +121,28 @@ document.querySelectorAll("[data-copy]").forEach(function (b) {
     }
     return { pts: pts, len: len };
   }
+  // Size and colours are read once per play or settle, not on every frame.
+  var w, h, dpr, accent, muted, line, strong, warn, mono;
+  function measure() {
+    dpr = window.devicePixelRatio || 1;
+    w = c.clientWidth; h = c.clientHeight;
+    var cs = getComputedStyle(document.documentElement);
+    accent = cs.getPropertyValue("--accent").trim() || "#f05138";
+    muted = cs.getPropertyValue("--muted").trim() || "#8f8f8f";
+    line = cs.getPropertyValue("--line-strong").trim() || "#3d3d3d";
+    strong = cs.getPropertyValue("--strong").trim() || "#fafafa";
+    warn = cs.getPropertyValue("--warn").trim() || "#e8c547";
+    mono = cs.getPropertyValue("--mono") || "monospace";
+  }
   function draw(elapsed) {
-    var dpr = window.devicePixelRatio || 1;
-    var w = c.clientWidth, h = c.clientHeight;
     if (!w || !h) return;
     var bw = Math.round(w * dpr), bh = Math.round(h * dpr);
     if (c.width !== bw || c.height !== bh) { c.width = bw; c.height = bh; }
     var ctx = c.getContext("2d"); ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    var cs = getComputedStyle(document.documentElement);
-    var accent = cs.getPropertyValue("--accent").trim() || "#f05138";
-    var muted = cs.getPropertyValue("--muted").trim() || "#8f8f8f";
-    var line = cs.getPropertyValue("--line-strong").trim() || "#3d3d3d";
-    var strong = cs.getPropertyValue("--strong").trim() || "#fafafa";
-    var warn = cs.getPropertyValue("--warn").trim() || "#e8c547";
     var small = w < 520;
     var padX = small ? 14 : 24, padT = 16, padB = 16;
     var px = function (n) { return padX + n.x * (w - padX * 2); }, py = function (n) { return padT + n.y * (h - padT - padB); };
-    var font = (small ? "10px " : "12px ") + (cs.getPropertyValue("--mono") || "monospace");
+    var font = (small ? "10px " : "12px ") + mono;
     ctx.clearRect(0, 0, w, h);
     ctx.font = font; ctx.textBaseline = "middle";
 
@@ -202,11 +210,13 @@ document.querySelectorAll("[data-copy]").forEach(function (b) {
     draw(e);
     if (e < TOTAL) raf = requestAnimationFrame(frame); else raf = null;
   }
-  function play() { if (raf) cancelAnimationFrame(raf); start = null; raf = requestAnimationFrame(frame); }
-  function settle() { draw(TOTAL); }
+  function play() { if (raf) cancelAnimationFrame(raf); measure(); start = null; raf = requestAnimationFrame(frame); }
+  function settle() { measure(); draw(TOTAL); }
+  // Before the graph is first seen there is nothing on screen to redraw.
+  var seen = reduce || !("IntersectionObserver" in window);
+  function redraw() { if (seen && !raf) settle(); }
   if (reduce) { settle(); }
   else if ("IntersectionObserver" in window) {
-    var seen = false;
     var io = new IntersectionObserver(function (entries) {
       if (!seen && entries.some(function (x) { return x.isIntersecting; })) { seen = true; io.disconnect(); play(); }
     }, { threshold: 0.5 });
@@ -215,21 +225,24 @@ document.querySelectorAll("[data-copy]").forEach(function (b) {
     var btn = document.getElementById("dots-replay");
     if (btn) { btn.hidden = false; btn.addEventListener("click", play); }
   } else { settle(); }
-  var t; window.addEventListener("resize", function () { clearTimeout(t); t = setTimeout(function () { if (!raf) settle(); }, 100); });
-  if (window.matchMedia) window.matchMedia("(prefers-color-scheme: light)").addEventListener("change", function () { if (!raf) settle(); });
+  var t; window.addEventListener("resize", function () { clearTimeout(t); t = setTimeout(function () { if (raf) measure(); else redraw(); }, 100); });
+  if (window.matchMedia) window.matchMedia("(prefers-color-scheme: light)").addEventListener("change", function () { if (raf) measure(); else redraw(); });
 })();
 
 // Hero background: a faint, still field of pixels with a few blocks lit in
 // orange, like findings on a map of the code. Nothing moves; it is redrawn
-// only on resize and when the colour scheme changes.
+// only when the canvas changes size and when the colour scheme changes. A
+// ResizeObserver reports the size after layout, so the field is drawn at the
+// hero's final height and the script does not force an early layout.
 (function () {
   var c = document.getElementById("bg");
   if (!c || !c.getContext) return;
-  var CELL = 16, P = 3, BLOCKS = 5;
+  var CELL = 16, P = 3, BLOCKS = 5, size = null;
   function rnd(seed) { var x = Math.sin(seed * 9999.1) * 10000; return x - Math.floor(x); }
-  function draw() {
-    var dpr = window.devicePixelRatio || 1, w = c.clientWidth, h = c.clientHeight;
+  function draw(w, h) {
     if (!w || !h) return;
+    var dpr = window.devicePixelRatio || 1;
+    size = { w: w, h: h, dpr: dpr };
     var bw = Math.round(w * dpr), bh = Math.round(h * dpr);
     if (c.width !== bw || c.height !== bh) { c.width = bw; c.height = bh; }
     var ctx = c.getContext("2d"); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, w, h);
@@ -250,9 +263,25 @@ document.querySelectorAll("[data-copy]").forEach(function (b) {
     }
     ctx.globalAlpha = 1;
   }
-  draw();
-  var t; window.addEventListener("resize", function () { clearTimeout(t); t = setTimeout(draw, 100); });
-  if (window.matchMedia) window.matchMedia("(prefers-color-scheme: light)").addEventListener("change", draw);
+  if ("ResizeObserver" in window) {
+    new ResizeObserver(function (entries) {
+      // Rounded like clientWidth and clientHeight, which the layout of the field depends on.
+      var r = entries[entries.length - 1].contentRect, w = Math.round(r.width), h = Math.round(r.height);
+      if (!size || size.w !== w || size.h !== h) draw(w, h);
+    }).observe(c);
+    // Moving to a screen with another pixel ratio keeps the CSS size, so watch the ratio too.
+    (function watchRatio() {
+      if (!window.matchMedia) return;
+      window.matchMedia("(resolution: " + (window.devicePixelRatio || 1) + "dppx)").addEventListener("change", function () {
+        if (size && size.dpr !== (window.devicePixelRatio || 1)) draw(size.w, size.h);
+        watchRatio();
+      }, { once: true });
+    })();
+  } else {
+    draw(c.clientWidth, c.clientHeight);
+    var t; window.addEventListener("resize", function () { clearTimeout(t); t = setTimeout(function () { draw(c.clientWidth, c.clientHeight); }, 100); });
+  }
+  if (window.matchMedia) window.matchMedia("(prefers-color-scheme: light)").addEventListener("change", function () { if (size) draw(size.w, size.h); });
 })();
 
 // Mark the nav link of the section that sits under the top third of the viewport.
@@ -271,5 +300,5 @@ document.querySelectorAll("[data-copy]").forEach(function (b) {
   function schedule() { if (!raf) raf = requestAnimationFrame(update); }
   window.addEventListener("scroll", schedule, { passive: true });
   window.addEventListener("resize", schedule);
-  update();
+  schedule();
 })();

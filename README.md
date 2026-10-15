@@ -1,8 +1,15 @@
 # lethen.dev
 
 The source of [lethen.dev](https://lethen.dev), the website for
-[Lethen](https://github.com/albovsky/lethen). It is plain HTML and CSS in
-`public/`, served by a Cloudflare Worker with static assets (`wrangler.jsonc`).
+[Lethen](https://github.com/albovsky/lethen). It is plain HTML, CSS and
+JavaScript in `public/`, served by a Cloudflare Worker with static assets
+(`wrangler.jsonc`). The page's CSS is inlined in `public/index.html`, so the
+first paint needs no second request.
+
+`public/_headers` caches `site.js` and `favicon.svg` for a year, and the pages
+reference them as `?v=<hash>`. `scripts/stamp-assets.mjs` updates those hashes;
+wrangler runs it before every deploy and `wrangler dev`, and after editing
+either file run `node scripts/stamp-assets.mjs` so the committed pages match.
 
 Preview locally:
 
